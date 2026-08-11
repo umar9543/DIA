@@ -203,10 +203,19 @@ const renderPreview = (type, widget) => {
     case 'bubble': return <Bubble data={dummyDataBubble} options={{...dummyOptions, plugins: { legend: {display: false}, datalabels: {display: false} }}} />;
     case 'speedometer': 
       return (
-        <div className="w-full h-full flex flex-col items-center justify-center p-4">
-          <div className="relative w-full flex flex-col items-center justify-end" style={{ aspectRatio: '2/1' }}>
-             <Doughnut data={dummyDataGauge} options={gaugeOptions} />
-             <div className="absolute bottom-0 flex flex-col items-center z-10 mb-[-4px]">
+        <div className="w-full h-full flex items-center justify-center p-2">
+          <div 
+            className="relative flex items-end justify-center" 
+            style={{ 
+              aspectRatio: '2/1', 
+              maxWidth: '100%', 
+              maxHeight: '100%',
+              width: 'auto',
+              height: '100%'
+            }}
+          >
+             <Doughnut data={dummyDataGauge} options={{...gaugeOptions, maintainAspectRatio: false}} />
+             <div className="absolute bottom-[8%] flex flex-col items-center z-10 pointer-events-none">
                <span className="text-3xl font-black text-gray-800 leading-none">75</span>
                <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mt-0.5">Score</span>
              </div>
