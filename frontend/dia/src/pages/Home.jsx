@@ -1,14 +1,22 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { DEMO_MODE } from '../utils/demo';
 
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [hasLayout, setHasLayout] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
+    
+    // Check auth and layout status
+    setIsLoggedIn(DEMO_MODE || !!localStorage.getItem('dia_token'));
+    setHasLayout(!!localStorage.getItem('dia_saved_layout'));
+    
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -40,14 +48,24 @@ export default function Home() {
           </div>
 
           <div className="flex items-center space-x-4 z-10">
-            <button className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors px-2">Sign In</button>
-            <Link 
-              to="/builder"
-              onClick={() => localStorage.removeItem('dia_saved_layout')}
-              className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-all hover:shadow-lg hover:shadow-slate-900/20 hover:-translate-y-0.5"
-            >
-              Get Started
-            </Link>
+            {isLoggedIn ? (
+              <Link 
+                to={hasLayout ? "/view" : "/builder"}
+                className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-all hover:shadow-lg hover:shadow-slate-900/20 hover:-translate-y-0.5"
+              >
+                Go to Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link to="/auth" className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors px-2">Sign In</Link>
+                <Link 
+                  to="/auth"
+                  className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-all hover:shadow-lg hover:shadow-slate-900/20 hover:-translate-y-0.5"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -77,11 +95,10 @@ export default function Home() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 animate-fade-in-up" style={{animationDelay: '300ms'}}>
           <Link 
-            to="/builder"
-            onClick={() => localStorage.removeItem('dia_saved_layout')}
+            to={isLoggedIn ? (hasLayout ? "/view" : "/builder") : "/auth"}
             className="w-full sm:w-auto px-8 py-4 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg shadow-xl shadow-indigo-600/30 transition-all hover:-translate-y-1"
           >
-            Launch Builder UI
+            {isLoggedIn ? "Go to Dashboard" : "Get Started"}
           </Link>
           <a 
             href="#features"
@@ -117,7 +134,7 @@ export default function Home() {
                 <i className="fa-solid fa-shield-halved text-xl text-emerald-600"></i>
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">Zero Data Retention (ZDR)</h3>
-              <p className="text-slate-600 leading-relaxed font-medium max-w-xl">We strictly store only metadata and column headers. All mathematical aggregations and data processing happen purely in the client's browser using advanced WASM architecture. 100% GDPR compliant.</p>
+              <p className="text-slate-600 leading-relaxed font-medium max-w-xl">Your spreadsheet is parsed in your browser and its rows stay there. We store only sheet names, column headers and your dashboard layout — every calculation runs on your device. Designed for GDPR compliance.</p>
               <div className="absolute -right-8 -bottom-8 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-colors duration-500"></div>
             </div>
 
@@ -129,7 +146,7 @@ export default function Home() {
                     <i className="fa-solid fa-chart-line text-xl text-purple-600"></i>
                   </div>
                   <h3 className="text-xl font-bold text-slate-900 mb-3">Stunning Chart Library</h3>
-                  <p className="text-slate-600 leading-relaxed font-medium max-w-xl">Access over 15 highly interactive chart types out of the box. From standard Line and Bar charts to advanced Radar, Funnel, and dynamic Speedometers—all featuring glassmorphic hover effects.</p>
+                  <p className="text-slate-600 leading-relaxed font-medium max-w-xl">Ten interactive chart types out of the box. From standard Line and Bar charts to advanced Radar, Funnel, and dynamic Speedometers—all featuring glassmorphic hover effects.</p>
                  </div>
                  <div className="flex-1 w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-6 relative overflow-hidden group-hover:-translate-y-2 transition-transform duration-500">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-indigo-500"></div>

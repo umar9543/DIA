@@ -5,3 +5,19 @@
     @apply bg-gray-50 text-gray-900;
   }
 }
+
+/* Force 1-column mobile layout for GridStack to bypass JS coordinate corruption */
+@media (max-width: 768px) {
+  .grid-stack {
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .grid-stack-item {
+    position: relative !important;
+    width: 100% !important;
+    left: 0 !important;
+    top: auto !important;
+    margin-bottom: 1rem !important;
+  }
+}

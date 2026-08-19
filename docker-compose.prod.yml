@@ -1,0 +1,31 @@
+# Production overlay: adds Caddy (automatic HTTPS) in front of the API and the built frontend.
+# Usage on the server:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+services:
+  api:
+    # Only reachable through Caddy on the internal network in production
+    ports: !reset []
+    environment:
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:?Set FRONTEND_ORIGIN in .env, e.g. https://app.example.de}
+
+  caddy:
+    image: caddy:2
+    container_name: dia-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?Set API_DOMAIN in .env, e.g. api.example.de}
+      APP_DOMAIN: ${APP_DOMAIN:?Set APP_DOMAIN in .env, e.g. app.example.de}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./frontend/dia/dist:/srv/app:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  caddy-data:
+  caddy-config:

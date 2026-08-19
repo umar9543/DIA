@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { GridStack } from 'gridstack';
 import ChartWidget from '../Charts/ChartWidget';
 
-export default function GridCanvas({ widgets, setWidgets, isReadonly = false }) {
+export default function GridCanvas({ widgets, setWidgets, isReadonly = false, onConfigureWidget }) {
   const gridRef = useRef(null);
   const gridInstance = useRef(null);
 
@@ -16,6 +16,7 @@ export default function GridCanvas({ widgets, setWidgets, isReadonly = false }) 
       acceptWidgets: !isReadonly,
       staticGrid: isReadonly,
       float: true,
+      disableOneColumnMode: true
     }, gridRef.current);
 
     // Handle dropping in a new widget from the Toolbox
@@ -117,8 +118,9 @@ export default function GridCanvas({ widgets, setWidgets, isReadonly = false }) 
   };
 
   const handleConfigure = (id) => {
-    // Open modal (to be implemented)
-    console.log("Configure widget", id);
+    if (onConfigureWidget) {
+      onConfigureWidget(id);
+    }
   };
 
   return (

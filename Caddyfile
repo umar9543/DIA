@@ -1,0 +1,21 @@
+# Caddy obtains and renews Let's Encrypt certificates automatically for both hosts.
+# Domains come from API_DOMAIN / APP_DOMAIN in .env (see docker-compose.prod.yml).
+
+{$API_DOMAIN} {
+    encode gzip
+    reverse_proxy api:5000
+}
+
+{$APP_DOMAIN} {
+    encode gzip
+    root * /srv/app
+    # React Router: serve index.html for any path that is not a real file
+    try_files {path} /index.html
+    file_server
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+}

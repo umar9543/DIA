@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import localforage from 'localforage';
 import WidgetToolbox from '../components/Toolbar/WidgetToolbox';
 import GridCanvas from '../components/Canvas/GridCanvas';
 import DataUploader from '../components/Sidebar/DataUploader';
 import TemplateSelector from '../components/Sidebar/TemplateSelector';
+import DataConfigModal from '../components/Modals/DataConfigModal';
+import { RAW_DATA_KEY, refreshWidgetConfigs } from '../utils/aggregate';
+import { DEMO_MODE } from '../utils/demo';
 
 export default function Builder() {
   const navigate = useNavigate();
@@ -19,6 +23,24 @@ export default function Builder() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isViewerMode, setIsViewerMode] = useState(false);
   const [activeLeftTab, setActiveLeftTab] = useState('template');
+  
+  // Data & Configuration State
+  const [loadedDataSheets, setLoadedDataSheets] = useState(null);
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [configuringWidgetId, setConfiguringWidgetId] = useState(null);
+  const [dataNotice, setDataNotice] = useState(null);
+
+  useEffect(() => {
+    localforage.getItem(RAW_DATA_KEY).then(data => {
+      if (data) setLoadedDataSheets(data);
+    }).catch(err => console.error("Error loading data from localforage:", err));
+  }, []);
+
+  useEffect(() => {
+    if (!dataNotice) return;
+    const timer = setTimeout(() => setDataNotice(null), 6000);
+    return () => clearTimeout(timer);
+  }, [dataNotice]);
 
   const toggleViewerMode = () => {
     setIsViewerMode(!isViewerMode);
@@ -29,6 +51,33 @@ export default function Builder() {
       setIsLeftOpen(true);
       setIsRightOpen(true);
     }
+  };
+
+  const handleDataLoaded = (data) => {
+    const sheets = data?.sheets || null;
+    setLoadedDataSheets(sheets);
+    if (!sheets) return;
+
+    setWidgets(prev => {
+      const { widgets: next, refreshed, skipped } = refreshWidgetConfigs(prev, sheets);
+      if (refreshed > 0 || skipped.length > 0) {
+        const parts = [];
+        if (refreshed > 0) parts.push(`${refreshed} chart${refreshed === 1 ? '' : 's'} recalculated from ${data.name}`);
+        if (skipped.length > 0) parts.push(`${skipped.length} kept previous values (${skipped[0].reason})`);
+        setDataNotice({ tone: skipped.length > 0 ? 'warn' : 'ok', text: parts.join(' · ') });
+      }
+      return next;
+    });
+  };
+
+  const handleDataRemoved = () => {
+    setLoadedDataSheets(null);
+    setDataNotice({ tone: 'ok', text: 'Data removed from this browser. Charts keep their last calculated values.' });
+  };
+
+  const handleConfigureWidget = (id) => {
+    setConfiguringWidgetId(id);
+    setIsConfigModalOpen(true);
   };
 
   const handleAddWidget = (type, w, h) => {
@@ -80,6 +129,11 @@ export default function Builder() {
             </defs>
           </svg>
           <h1 className="text-xl font-bold text-gray-800 tracking-tight">DIA <span className="font-medium text-gray-400">| Builder</span></h1>
+          {DEMO_MODE && (
+            <span className="ml-2 text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5" title="No login, no backend – everything runs in this browser">
+              Demo mode
+            </span>
+          )}
         </div>
         
         <div className="flex items-center space-x-4">
@@ -141,7 +195,7 @@ export default function Builder() {
           </div>
           <div className="flex-1 p-5 overflow-y-auto w-80">
             {activeLeftTab === 'data' ? (
-              <DataUploader onDataLoaded={(data) => console.log('Data loaded:', data)} />
+              <DataUploader onDataLoaded={handleDataLoaded} onDataRemoved={handleDataRemoved} loadedDataSheets={loadedDataSheets} />
             ) : (
               <TemplateSelector onApplyTemplate={handleApplyTemplate} />
             )}
@@ -172,7 +226,19 @@ export default function Builder() {
             </button>
           )}
 
-          <GridCanvas widgets={widgets} setWidgets={setWidgets} isReadonly={isViewerMode} />
+          {dataNotice && (
+            <div className={`mb-4 px-4 py-2.5 rounded-lg text-sm font-medium border flex items-center ${dataNotice.tone === 'warn' ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`}>
+              <i className={`fa-solid ${dataNotice.tone === 'warn' ? 'fa-triangle-exclamation' : 'fa-circle-check'} mr-2`}></i>
+              {dataNotice.text}
+            </div>
+          )}
+
+          <GridCanvas
+            widgets={widgets}
+            setWidgets={setWidgets} 
+            isReadonly={isViewerMode} 
+            onConfigureWidget={handleConfigureWidget}
+          />
         </main>
 
         {/* Right Sidebar - Chart Toolbox */}
@@ -185,6 +251,15 @@ export default function Builder() {
         </aside>
 
       </div>
+
+      <DataConfigModal 
+        isOpen={isConfigModalOpen} 
+        onClose={() => setIsConfigModalOpen(false)} 
+        widgetId={configuringWidgetId} 
+        widgets={widgets} 
+        setWidgets={setWidgets} 
+        loadedDataSheets={loadedDataSheets} 
+      />
     </div>
   );
 }

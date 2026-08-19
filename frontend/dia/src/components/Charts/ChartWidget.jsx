@@ -9,7 +9,8 @@ import {
   ArcElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 } from 'chart.js';
 import { Bar, Line, Pie, Doughnut, Radar, Bubble } from 'react-chartjs-2';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
@@ -25,6 +26,7 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
+  Filler,
   ChartDataLabels
 );
 
@@ -37,27 +39,50 @@ const dummyOptions = {
   },
 };
 
-const barOptions = {
+const getBarOptions = (isSegmentation = false) => ({
+  indexAxis: isSegmentation ? 'x' : 'y', // Vertical for segmentation, horizontal for standard
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
     legend: { display: false },
     datalabels: {
-      display: false
+      display: true,
+      align: 'end',
+      anchor: 'end',
+      color: '#475569',
+      font: { size: 11, weight: '600' },
+      formatter: (value) => {
+        if (typeof value !== 'number') return value;
+        return value >= 1000000 ? (value/1000000).toFixed(1) + 'M' 
+             : value >= 1000 ? (value/1000).toFixed(1) + 'k' 
+             : value.toLocaleString(undefined, {maximumFractionDigits: 1});
+      }
     }
   },
   scales: {
     x: {
+      display: isSegmentation, // Show category axis for vertical
       grid: { display: false },
-      border: { display: false }
+      border: { display: false },
+      ticks: isSegmentation ? {
+        font: { size: 11, weight: '500' },
+        color: '#334155',
+        autoSkip: false
+      } : undefined
     },
     y: {
-      grid: { color: '#f1f5f9' },
-      border: { display: false }
+      display: !isSegmentation,
+      grid: { display: false },
+      border: { display: false },
+      ticks: !isSegmentation ? {
+        font: { size: 11, weight: '500' },
+        color: '#334155',
+        autoSkip: false
+      } : undefined
     }
   },
-  layout: { padding: { top: 20 } } // Space for data labels
-};
+  layout: { padding: isSegmentation ? { top: 30 } : { right: 50 } } // Space for labels at the end of bars
+});
 
 const gaugeOptions = {
   responsive: true,
@@ -73,17 +98,41 @@ const gaugeOptions = {
   layout: { padding: 10 }
 };
 
-const radarOptions = {
+const getRadarOptions = (isConfigured) => ({
   responsive: true,
   maintainAspectRatio: false,
   scales: {
     r: { 
       ticks: { display: false },
-      grid: { color: '#e2e8f0' }
+      grid: { color: '#e2e8f0' },
+      pointLabels: {
+        font: { size: 10, weight: '500' },
+        color: '#64748b'
+      }
     }
   },
-  plugins: { legend: { display: false }, datalabels: { display: false } }
-};
+  plugins: { 
+    legend: { display: isConfigured, position: 'bottom', labels: { boxWidth: 10, padding: 10, font: { size: 11 } } }, 
+    datalabels: { display: false } 
+  }
+});
+
+const getBubbleOptions = (isConfigured) => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: isConfigured, position: 'bottom' },
+    datalabels: { display: false },
+    tooltip: {
+      callbacks: {
+        label: function(context) {
+           const pt = context.raw;
+           return `${pt.label || ''} (X: ${Number(pt.x).toLocaleString(undefined, {maximumFractionDigits: 1})}, Y: ${Number(pt.y).toLocaleString(undefined, {maximumFractionDigits: 1})})`;
+        }
+      }
+    }
+  }
+});
 
 const dummyDataBar = {
   labels: ['Jan', 'Feb', 'Mar', 'Apr'],
@@ -144,64 +193,168 @@ const dummyDataTable = [
 ];
 
 const renderPreview = (type, widget) => {
+  const isConfigured = !!widget?.config;
+  const config = widget?.config;
+  
+  const labels = isConfigured && config.labels ? config.labels : [];
+  const dataValues = isConfigured && config.dataValues ? config.dataValues : [];
+  
+  const isSegmentation = config?.aggregation === 'segmentation';
+
+  // Real Data Generators
+  const realDataBar = {
+    labels,
+    datasets: [{ 
+      label: config?.yAxis || 'Value', 
+      data: dataValues, 
+      backgroundColor: isSegmentation 
+        ? ['#4ade80', '#60a5fa', '#fbbf24'] // Green, Blue, Yellow for ABC Segments
+        : '#334155', // IBCS Solid Dark Grey for Actuals
+      borderRadius: 4,
+      barPercentage: 0.7
+    }]
+  };
+
+  const realDataLine = {
+    labels,
+    datasets: [{ 
+      label: config?.yAxis || 'Value', 
+      data: dataValues, 
+      borderColor: '#6366f1', 
+      backgroundColor: '#6366f1', 
+      borderWidth: 2, 
+      tension: 0.4 
+    }]
+  };
+
+  const realDataPie = {
+    labels,
+    datasets: [{ 
+      data: dataValues, 
+      // Generate some random colors or use a preset palette
+      backgroundColor: ['#f59e0b', '#22c55e', '#3b82f6', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'], 
+      borderWidth: 1 
+    }]
+  };
+
+  const radarColors = [
+    { bg: 'rgba(99, 102, 241, 0.2)', border: '#6366f1' },
+    { bg: 'rgba(34, 197, 94, 0.2)', border: '#22c55e' },
+    { bg: 'rgba(245, 158, 11, 0.2)', border: '#f59e0b' },
+    { bg: 'rgba(239, 68, 68, 0.2)', border: '#ef4444' },
+    { bg: 'rgba(168, 85, 247, 0.2)', border: '#a855f7' }
+  ];
+
+  const isRadarConfigured = !!config?.radarData;
+  const realDataRadar = isRadarConfigured ? {
+    labels: config.radarData.labels,
+    datasets: config.radarData.datasets.map((ds, i) => ({
+      label: ds.label,
+      data: ds.data,
+      backgroundColor: radarColors[i % radarColors.length].bg,
+      borderColor: radarColors[i % radarColors.length].border,
+      borderWidth: 2
+    }))
+  } : dummyDataRadar;
+
   switch (type) {
-    case 'kpi':
-      const kpiValue = widget?.config?.value || '478';
-      const kpiTitle = widget?.config?.title || 'Total Suppliers';
+    case 'kpi': {
+      // If configured, calculate a single KPI value (e.g. sum of all aggregates)
+      let kpiValue = '478';
+      let kpiTitle = 'Total Suppliers';
+      
+      if (isConfigured) {
+        kpiTitle = config.title;
+        const total = dataValues.reduce((sum, val) => sum + val, 0);
+        kpiValue = total >= 1000000 
+          ? (total/1000000).toFixed(1) + 'M' 
+          : total >= 1000 
+          ? (total/1000).toFixed(1) + 'k' 
+          : total?.toLocaleString(undefined, {maximumFractionDigits: 1});
+      }
+      
       return (
-        <div className="flex flex-col w-full h-full relative bg-white p-5 cursor-pointer">
-          {/* Interactive Top Border Line */}
-          <div className="absolute top-0 left-0 h-1 w-0 bg-gradient-to-r from-indigo-500 to-violet-500 group-hover:w-full transition-all duration-500 ease-out z-20"></div>
-          
-          <div className="flex justify-between items-start h-full">
-            <div className="flex flex-col justify-center h-full z-10">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 group-hover:text-indigo-500 transition-colors duration-300">{kpiTitle}</span>
-              <span className="text-[2.75rem] font-black text-slate-800 tracking-tighter leading-none group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-indigo-600 group-hover:to-violet-500 transition-all duration-300">{kpiValue}</span>
-            </div>
-            
-            <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center group-hover:bg-indigo-50 group-hover:rotate-12 group-hover:scale-110 transition-all duration-300 shadow-sm border border-slate-100 mt-1">
-               <i className="fa-solid fa-chart-pie text-xl text-slate-300 group-hover:text-indigo-500 transition-colors duration-300"></i>
-            </div>
-          </div>
-          
-          {/* Ambient Hover Glow */}
-          <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-indigo-500 rounded-full blur-[40px] opacity-0 group-hover:opacity-20 transition-opacity duration-700 pointer-events-none"></div>
+        <div className="flex flex-col w-full h-full bg-white p-3 sm:p-5 cursor-pointer justify-center items-center shadow-[0px_2px_10px_rgba(0,0,0,0.04)] border border-slate-100 rounded-2xl overflow-hidden" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+          <span className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold text-[#006085] tracking-tight leading-none w-full text-center break-words shrink" title={kpiValue}>
+            {kpiValue}
+          </span>
+          <span className="text-xs md:text-[13px] font-semibold text-[#5a7684] mt-1.5 md:mt-2.5 w-full text-center line-clamp-2" title={kpiTitle}>
+            {kpiTitle}
+          </span>
         </div>
       );
-    case 'table':
+    }
+    case 'table': {
+      const isTableConfigured = !!widget?.config?.tableData;
+      const tableData = widget?.config?.tableData || [];
+      const cols = widget?.config?.selectedColumns || [];
+
       return (
         <div className="w-full h-full overflow-auto bg-white rounded-lg">
           <table className="w-full text-sm text-left text-gray-500">
-            <thead className="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0 shadow-sm">
               <tr>
-                <th className="px-4 py-3 font-semibold">Company</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold text-right">Revenue</th>
+                {isTableConfigured ? (
+                  cols.map(c => (
+                    <th key={c} className="px-4 py-3 font-semibold whitespace-nowrap">{c}</th>
+                  ))
+                ) : (
+                  <>
+                    <th className="px-4 py-3 font-semibold">Company</th>
+                    <th className="px-4 py-3 font-semibold text-right">Revenue</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {dummyDataTable.map((row) => (
-                <tr key={row.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 font-medium text-gray-900">{row.name}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded-full ${row.status === 'Active' ? 'bg-green-100 text-green-700' : row.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                      {row.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right font-medium text-gray-700">{row.revenue}</td>
-                </tr>
-              ))}
+              {isTableConfigured ? (
+                tableData.map((row, i) => (
+                  <tr key={i} className="hover:bg-gray-50 transition-colors">
+                    {cols.map(c => (
+                      <td key={c} className="px-4 py-3 font-medium text-gray-700 truncate max-w-[250px]" title={row[c]}>
+                        {!isNaN(row[c]) && row[c] !== '' && row[c] !== null
+                          ? Number(row[c]).toLocaleString(undefined, {maximumFractionDigits: 2})
+                          : row[c]}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : (
+                dummyDataTable.map((row) => (
+                  <tr key={row.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 font-medium text-gray-900">{row.name}</td>
+                    <td className="px-4 py-3 text-right font-medium text-gray-700">{row.revenue}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       );
-    case 'bar': return <Bar data={dummyDataBar} options={barOptions} />;
-    case 'line': return <Line data={dummyDataLine} options={dummyOptions} />;
-    case 'pie': return <Pie data={dummyDataPie} options={dummyOptions} />;
-    case 'doughnut': return <Doughnut data={dummyDataPie} options={dummyOptions} />;
-    case 'radar': return <Radar data={dummyDataRadar} options={radarOptions} />;
-    case 'bubble': return <Bubble data={dummyDataBubble} options={{...dummyOptions, plugins: { legend: {display: false}, datalabels: {display: false} }}} />;
-    case 'speedometer': 
+    }
+    case 'bar': return <Bar data={isConfigured ? realDataBar : dummyDataBar} options={getBarOptions(isSegmentation)} />;
+    case 'line': return <Line data={isConfigured ? realDataLine : dummyDataLine} options={dummyOptions} />;
+    case 'pie': return <Pie data={isConfigured ? realDataPie : dummyDataPie} options={dummyOptions} />;
+    case 'doughnut': return <Doughnut data={isConfigured ? realDataPie : dummyDataPie} options={dummyOptions} />;
+    case 'radar': return <Radar data={isRadarConfigured ? realDataRadar : dummyDataRadar} options={getRadarOptions(isRadarConfigured)} />;
+    case 'bubble': return <Bubble data={isConfigured && config.bubbleData ? config.bubbleData : dummyDataBubble} options={getBubbleOptions(isConfigured)} />;
+    case 'speedometer': {
+      const speedoValue = isConfigured ? (dataValues[0] || 0) : 75;
+      const speedoFormat = speedoValue >= 1000000 
+          ? (speedoValue/1000000).toFixed(1) + 'M' 
+          : speedoValue >= 1000 
+          ? (speedoValue/1000).toFixed(1) + 'k' 
+          : speedoValue?.toLocaleString(undefined, {maximumFractionDigits: 1});
+      
+      const speedoTitle = isConfigured ? config.title : 'Score';
+      const gaugeMax = speedoValue > 100 ? speedoValue : 100;
+      const visualFill = speedoValue > 100 ? 100 : speedoValue;
+      
+      const activeDataGauge = {
+        labels: ['Score', 'Remaining'],
+        datasets: [{ data: [visualFill, 100 - visualFill], backgroundColor: ['#10b981', '#f1f5f9'], borderWidth: 0 }]
+      };
+
       return (
         <div className="w-full h-full flex items-center justify-center p-2">
           <div 
@@ -214,23 +367,39 @@ const renderPreview = (type, widget) => {
               height: '100%'
             }}
           >
-             <Doughnut data={dummyDataGauge} options={{...gaugeOptions, maintainAspectRatio: false}} />
+             <Doughnut data={activeDataGauge} options={{...gaugeOptions, maintainAspectRatio: false}} />
              <div className="absolute bottom-[8%] flex flex-col items-center z-10 pointer-events-none">
-               <span className="text-3xl font-black text-gray-800 leading-none">75</span>
-               <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mt-0.5">Score</span>
+               <span className="text-3xl font-black text-gray-800 leading-none truncate max-w-[120px] text-center" title={speedoValue}>{speedoFormat}</span>
+               <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mt-0.5 truncate max-w-[120px] text-center" title={speedoTitle}>{speedoTitle}</span>
              </div>
           </div>
         </div>
       );
-    case 'funnel':
+    }
+    case 'funnel': {
+      const funnelData = isConfigured && config.aggregatedData ? config.aggregatedData : [
+        { label: 'Leads', value: 5000 },
+        { label: 'Qualified', value: 2100 },
+        { label: 'Proposals', value: 800 },
+        { label: 'Wins', value: 250 },
+      ];
+      const maxVal = Math.max(...funnelData.map(d => d.value));
+      const colors = ['bg-indigo-500', 'bg-indigo-400', 'bg-indigo-300', 'bg-emerald-400', 'bg-emerald-300'];
+      
       return (
-        <div className="flex flex-col items-center w-full h-full justify-center space-y-1.5 p-4">
-          <div className="w-[90%] h-8 bg-indigo-500 rounded flex items-center justify-between px-3 text-white text-xs font-bold shadow-sm hover:scale-105 transition-transform"><span className="drop-shadow-sm">Leads</span><span className="drop-shadow-sm">5,000</span></div>
-          <div className="w-[70%] h-8 bg-indigo-400 rounded flex items-center justify-between px-3 text-white text-xs font-bold shadow-sm hover:scale-105 transition-transform"><span className="drop-shadow-sm">Qualified</span><span className="drop-shadow-sm">2,100</span></div>
-          <div className="w-[50%] h-8 bg-indigo-300 rounded flex items-center justify-between px-3 text-white text-xs font-bold shadow-sm hover:scale-105 transition-transform"><span className="drop-shadow-sm">Proposals</span><span className="drop-shadow-sm">800</span></div>
-          <div className="w-[35%] h-8 bg-emerald-400 rounded flex items-center justify-between px-3 text-white text-xs font-bold shadow-sm hover:scale-105 transition-transform"><span className="drop-shadow-sm">Wins</span><span className="drop-shadow-sm">250</span></div>
+        <div className="flex flex-col items-center w-full h-full justify-center space-y-1.5 p-4 overflow-y-auto">
+          {funnelData.slice(0, 7).map((d, i) => {
+            const pct = maxVal > 0 ? (d.value / maxVal) * 90 : 10;
+            return (
+              <div key={i} style={{ width: `${Math.max(pct, 15)}%` }} className={`h-8 ${colors[i % colors.length]} rounded flex items-center justify-between px-3 text-white text-xs font-bold shadow-sm hover:scale-105 transition-transform shrink-0`}>
+                <span className="drop-shadow-sm truncate mr-2" title={String(d.label)}>{String(d.label)}</span>
+                <span className="drop-shadow-sm">{Number(d.value).toLocaleString(undefined, {maximumFractionDigits: 1})}</span>
+              </div>
+            );
+          })}
         </div>
       );
+    }
     default: return null;
   }
 };
