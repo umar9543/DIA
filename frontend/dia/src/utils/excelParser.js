@@ -82,9 +82,12 @@ export async function parseWorkbookFile(file) {
     const { headerRowIndex, headers } = detectHeaderRow(rows);
     if (!headers || headers.length === 0) continue;
 
+    // Excel's used range often runs far past the real data (formulas returning "",
+    // leftover formatting). Rows with no value in any column are not data.
     const data = rows
       .slice(headerRowIndex + 1)
-      .map((row) => (Array.isArray(row) ? Array.from(row, normalizeCell) : []));
+      .map((row) => (Array.isArray(row) ? Array.from(row, normalizeCell) : []))
+      .filter((row) => row.some((cell) => !isBlank(cell)));
 
     sheets.push({ sheetName, headers, data });
   }

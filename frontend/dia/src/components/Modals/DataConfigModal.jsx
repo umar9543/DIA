@@ -18,7 +18,7 @@ const CustomSelect = ({ value, onChange, options, placeholder, disabled }) => {
 
   return (
     <div className={`relative ${disabled ? 'opacity-50 pointer-events-none' : ''}`} ref={selectRef}>
-      <div 
+      <div
         className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg p-2.5 font-medium flex justify-between items-center cursor-pointer hover:border-indigo-400 transition-colors h-[42px]"
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
@@ -27,11 +27,11 @@ const CustomSelect = ({ value, onChange, options, placeholder, disabled }) => {
         </span>
         <i className={`fa-solid fa-chevron-down text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}></i>
       </div>
-      
+
       {isOpen && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto py-1.5">
           {options.map((opt, i) => (
-            <div 
+            <div
               key={i}
               className={`px-3 py-2 text-sm cursor-pointer transition-colors ${value === opt.value ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-700 hover:bg-slate-50'}`}
               onClick={() => {
@@ -90,8 +90,9 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
   if (!isOpen) return null;
 
   const currentSheetData = loadedDataSheets?.find(s => s.sheetName === selectedSheet);
-  const columns = currentSheetData 
-    ? currentSheetData.headers.filter(c => c !== null && c !== undefined && String(c).trim() !== '') 
+
+  const columns = currentSheetData
+    ? currentSheetData.headers.filter(c => c !== null && c !== undefined && String(c).trim() !== '')
     : [];
 
   const widget = widgets.find(w => w.id === widgetId);
@@ -154,20 +155,20 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       ></div>
 
       {/* Modal */}
       <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all border border-slate-100">
-        
+
         <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <h3 className="text-lg font-bold text-slate-800 flex items-center">
             <i className="fa-solid fa-chart-pie text-indigo-500 mr-2"></i>
             Configure Chart Data
           </h3>
-          <button 
+          <button
             onClick={onClose}
             className="text-slate-400 hover:text-slate-600 transition-colors p-1"
           >
@@ -190,37 +191,26 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
           ) : (
             <>
               {/* Sheet Selection */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Dataset (Sheet)</label>
-                  <CustomSelect 
-                    value={selectedSheet}
-                    onChange={(val) => setSelectedSheet(val)}
-                    placeholder="Select a sheet"
-                    options={loadedDataSheets.map(s => ({ value: s.sheetName, label: `${s.sheetName} (${s.headers.length} columns)` }))}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Custom Title (Optional)</label>
-                  <input 
-                    type="text" 
-                    value={customTitle}
-                    onChange={(e) => setCustomTitle(e.target.value)}
-                    placeholder="e.g. Total Suppliers"
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 font-medium placeholder:text-slate-400"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1.5">Dataset (Sheet)</label>
+                <CustomSelect
+                  value={selectedSheet}
+                  onChange={(val) => setSelectedSheet(val)}
+                  placeholder="Select a sheet"
+                  options={loadedDataSheets.map(s => ({ value: s.sheetName, label: `${s.sheetName} (${s.headers.length} columns)` }))}
+                />
               </div>
 
               {/* Render Table Column Multi-Select or Chart Axis Mapping */}
               {isTable ? (
+                <>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1.5">Columns to Display</label>
                   <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
                     {columns.map(col => (
                       <label key={col} className="flex items-center space-x-3 cursor-pointer group">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           checked={selectedColumns.includes(col)}
                           onChange={(e) => {
                             if (e.target.checked) {
@@ -236,17 +226,30 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
                     ))}
                   </div>
                 </div>
+
+                {/* Title – after the column selection */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Custom Title <span className="text-xs font-normal text-slate-400">(Optional)</span></label>
+                  <input
+                    type="text"
+                    value={customTitle}
+                    onChange={(e) => setCustomTitle(e.target.value)}
+                    placeholder="e.g. Total Suppliers"
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 font-medium placeholder:text-slate-400"
+                  />
+                </div>
+                </>
               ) : (
                 <>
                   {/* Axis Mapping */}
                   <div className={`grid ${isSingleValue || aggregation === 'segmentation' || isRadar ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
-                    
+
                     {!isSingleValue && aggregation !== 'segmentation' && (
                       <div>
                         <label className="block text-sm font-bold text-slate-700 mb-1.5">
                           X-Axis <span className="text-xs font-normal text-slate-400">(Dimension / Group By)</span>
                         </label>
-                        <CustomSelect 
+                        <CustomSelect
                           value={xAxis}
                           onChange={(val) => setXAxis(val)}
                           placeholder="Select column"
@@ -255,13 +258,13 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
                         />
                       </div>
                     )}
-                    
+
                     {!isMultiMeasure && (
                       <div>
                         <label className="block text-sm font-bold text-slate-700 mb-1.5">
                           Y-Axis <span className="text-xs font-normal text-slate-400">(Measure)</span>
                         </label>
-                        <CustomSelect 
+                        <CustomSelect
                           value={yAxis}
                           onChange={(val) => setYAxis(val)}
                           placeholder="Select column"
@@ -281,8 +284,8 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
                       <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-lg bg-slate-50 p-2 space-y-1">
                         {columns.map(col => (
                           <label key={col} className="flex items-center p-2 hover:bg-white rounded cursor-pointer transition-colors">
-                            <input 
-                              type="checkbox" 
+                            <input
+                              type="checkbox"
                               className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500"
                               checked={selectedColumns.includes(col)}
                               onChange={(e) => {
@@ -297,6 +300,18 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
                     </div>
                   )}
 
+                  {/* Title – after the column selection */}
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1.5">Custom Title <span className="text-xs font-normal text-slate-400">(Optional)</span></label>
+                    <input
+                      type="text"
+                      value={customTitle}
+                      onChange={(e) => setCustomTitle(e.target.value)}
+                      placeholder="e.g. Total Suppliers"
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 font-medium placeholder:text-slate-400"
+                    />
+                  </div>
+
                   {/* Aggregation */}
                   {!isMultiMeasure && (
                   <div>
@@ -309,8 +324,8 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
                           key={agg}
                           onClick={() => setAggregation(agg)}
                           className={`py-2 px-3 text-xs font-bold rounded-lg border transition-all ${
-                            aggregation === agg 
-                              ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm' 
+                            aggregation === agg
+                              ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm'
                               : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                           }`}
                         >
@@ -325,7 +340,7 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
                   {!isSingleValue && aggregation !== 'segmentation' && !isMultiMeasure && (
                     <div>
                       <label className="block text-sm font-bold text-slate-700 mb-1.5">Data Breakdown Limit</label>
-                      <select 
+                      <select
                         value={dataLimit}
                         onChange={(e) => setDataLimit(e.target.value)}
                         className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 font-medium"
@@ -345,19 +360,19 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
         </div>
 
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end space-x-3">
-          <button 
+          <button
             onClick={onClose}
             className="px-4 py-2 text-sm font-bold text-slate-600 hover:text-slate-800 transition-colors"
           >
             Cancel
           </button>
-          <button 
+          <button
             onClick={handleSave}
             disabled={
-              !selectedSheet || 
+              !selectedSheet ||
               ((isTable || isMultiMeasure) && selectedColumns.length < (isBubble ? 3 : (isRadar ? 2 : 1))) ||
               (isMultiMeasure && !xAxis) ||
-              (!isTable && !isMultiMeasure && ((!isSingleValue && aggregation !== 'segmentation' && !xAxis) || !yAxis)) || 
+              (!isTable && !isMultiMeasure && ((!isSingleValue && aggregation !== 'segmentation' && !xAxis) || !yAxis)) ||
               isProcessing
             }
             className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-md shadow-indigo-200 transition-all disabled:opacity-50 disabled:hover:bg-indigo-600 flex items-center"
@@ -369,8 +384,9 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
             )}
           </button>
         </div>
-        
+
       </div>
+
     </div>
   );
 }

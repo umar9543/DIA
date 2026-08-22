@@ -5,6 +5,8 @@ const MULTI_MEASURE_TYPES = ['radar', 'bubble'];
 const CHART_ITEM_CAP = 50;
 const TABLE_ROW_CAP = 500;
 
+const isBlank = (value) => value === undefined || value === null || String(value).trim() === '';
+
 const toNumber = (value) => {
   const parsed = parseFloat(String(value).replace(/[^0-9.-]+/g, ''));
   return isNaN(parsed) ? 0 : parsed;
@@ -14,8 +16,8 @@ const pickStat = (aggregation, stats) => {
   switch (aggregation) {
     case 'average': return stats.count > 0 ? stats.sum / stats.count : 0;
     case 'count': return stats.count;
-    case 'min': return stats.min;
-    case 'max': return stats.max;
+    case 'min': return stats.min === Infinity ? 0 : stats.min;
+    case 'max': return stats.max === -Infinity ? 0 : stats.max;
     default: return stats.sum;
   }
 };
@@ -41,13 +43,15 @@ function buildMultiMeasure(sheet, { xAxis, selectedColumns, aggregation, isBubbl
   const groups = new Map();
 
   sheet.data.forEach((row) => {
-    const key = row[xIndex] ?? 'Unknown';
+    if (yIndices.every((yIdx) => isBlank(row[yIdx]))) return; // nothing measurable in this row
+    const key = isBlank(row[xIndex]) ? 'Unknown' : row[xIndex];
     if (!groups.has(key)) {
       groups.set(key, { count: 0, stats: yIndices.map(() => ({ sum: 0, count: 0, min: Infinity, max: -Infinity })) });
     }
     const group = groups.get(key);
     group.count += 1;
     yIndices.forEach((yIdx, i) => {
+      if (isBlank(row[yIdx])) return; // empty cells do not count
       const value = toNumber(row[yIdx]);
       const s = group.stats[i];
       s.sum += value; s.count += 1;
@@ -100,11 +104,11 @@ function buildSingleValue(sheet, { yAxis, aggregation }) {
   const yIndex = columnIndex(sheet, yAxis);
   const stats = { sum: 0, count: 0, min: Infinity, max: -Infinity };
   sheet.data.forEach((row) => {
+    if (isBlank(row[yIndex])) return; // empty cells do not count
     const value = toNumber(row[yIndex]);
     stats.sum += value; stats.count += 1;
     stats.min = Math.min(stats.min, value); stats.max = Math.max(stats.max, value);
   });
-  if (stats.min === Infinity) { stats.min = 0; stats.max = 0; }
   return [{ label: 'Total', value: pickStat(aggregation, stats) }];
 }
 
@@ -138,9 +142,10 @@ function buildGrouped(sheet, { xAxis, yAxis, aggregation, dataLimit, sortByLabel
   const groups = new Map();
 
   sheet.data.forEach((row) => {
-    const key = row[xIndex] ?? 'Unknown';
+    if (isBlank(row[yIndex])) return; // empty cells do not count
+    const key = isBlank(row[xIndex]) ? 'Unknown' : row[xIndex];
     const value = toNumber(row[yIndex]);
-    if (!groups.has(key)) groups.set(key, { sum: 0, count: 0, min: value, max: value });
+    if (!groups.has(key)) groups.set(key, { sum: 0, count: 0, min: Infinity, max: -Infinity });
     const g = groups.get(key);
     g.sum += value; g.count += 1;
     g.min = Math.min(g.min, value); g.max = Math.max(g.max, value);
