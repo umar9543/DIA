@@ -8,22 +8,22 @@ import TemplateSelector from '../components/Sidebar/TemplateSelector';
 import DataConfigModal from '../components/Modals/DataConfigModal';
 import { RAW_DATA_KEY, refreshWidgetConfigs } from '../utils/aggregate';
 import { DEMO_MODE } from '../utils/demo';
+import { loadPages, savePages, createPage } from '../utils/layout';
 
 export default function Builder() {
   const navigate = useNavigate();
-  
-  // Initialize from local storage if available
-  const [widgets, setWidgets] = useState(() => {
-    const saved = localStorage.getItem('dia_saved_layout');
-    return saved ? JSON.parse(saved) : [];
-  });
-  
+
+  const [pages, setPages] = useState(() => loadPages() || [createPage('Page 1')]);
+  const [activePageId, setActivePageId] = useState(null);
+
+  const activePage = pages.find(p => p.id === activePageId) || pages[0];
+
   const [isLeftOpen, setIsLeftOpen] = useState(true);
   const [isRightOpen, setIsRightOpen] = useState(true);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isViewerMode, setIsViewerMode] = useState(false);
   const [activeLeftTab, setActiveLeftTab] = useState('template');
-  
+
   // Data & Configuration State
   const [loadedDataSheets, setLoadedDataSheets] = useState(null);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
@@ -42,6 +42,48 @@ export default function Builder() {
     return () => clearTimeout(timer);
   }, [dataNotice]);
 
+  // Applies a widget-array update to the page that is currently open.
+  const setActiveWidgets = (updater) => {
+    const pageId = activePage.id;
+    setPages(prev => prev.map(p =>
+      p.id === pageId
+        ? { ...p, widgets: typeof updater === 'function' ? updater(p.widgets) : updater }
+        : p
+    ));
+  };
+
+  const handleAddPage = () => {
+    const page = createPage(`Page ${pages.length + 1}`);
+    setPages(prev => [...prev, page]);
+    setActivePageId(page.id);
+  };
+
+  const [editingPageId, setEditingPageId] = useState(null);
+  const [editingName, setEditingName] = useState('');
+
+  const startRename = (page) => {
+    setEditingPageId(page.id);
+    setEditingName(page.name);
+  };
+
+  const commitRename = () => {
+    const name = editingName.trim();
+    if (name) {
+      setPages(prev => prev.map(p => p.id === editingPageId ? { ...p, name } : p));
+    }
+    setEditingPageId(null);
+  };
+
+  const handleDeletePage = (page) => {
+    if (pages.length <= 1) return;
+    if (!window.confirm(`Delete "${page.name}" and its ${page.widgets.length} widget${page.widgets.length === 1 ? '' : 's'}?`)) return;
+    setPages(prev => {
+      const next = prev.filter(p => p.id !== page.id);
+      if (page.id === activePage.id) setActivePageId(next[0].id);
+      return next;
+    });
+  };
+
   const toggleViewerMode = () => {
     setIsViewerMode(!isViewerMode);
     if (!isViewerMode) {
@@ -56,15 +98,23 @@ export default function Builder() {
   const handleDataLoaded = (data) => {
     const sheets = data?.sheets || null;
     setLoadedDataSheets(sheets);
-    if (!sheets) return;
+    if (!sheets || !data.refresh) return;
 
-    setWidgets(prev => {
-      const { widgets: next, refreshed, skipped } = refreshWidgetConfigs(prev, sheets);
-      if (refreshed > 0 || skipped.length > 0) {
+    // Recalculate every configured widget on every page against the new data.
+    setPages(prev => {
+      let refreshedTotal = 0;
+      const skippedAll = [];
+      const next = prev.map(p => {
+        const { widgets, refreshed, skipped } = refreshWidgetConfigs(p.widgets, sheets);
+        refreshedTotal += refreshed;
+        skippedAll.push(...skipped);
+        return { ...p, widgets };
+      });
+      if (refreshedTotal > 0 || skippedAll.length > 0) {
         const parts = [];
-        if (refreshed > 0) parts.push(`${refreshed} chart${refreshed === 1 ? '' : 's'} recalculated from ${data.name}`);
-        if (skipped.length > 0) parts.push(`${skipped.length} kept previous values (${skipped[0].reason})`);
-        setDataNotice({ tone: skipped.length > 0 ? 'warn' : 'ok', text: parts.join(' · ') });
+        if (refreshedTotal > 0) parts.push(`${refreshedTotal} chart${refreshedTotal === 1 ? '' : 's'} recalculated from ${data.name}`);
+        if (skippedAll.length > 0) parts.push(`${skippedAll.length} kept previous values (${skippedAll[0].reason})`);
+        setDataNotice({ tone: skippedAll.length > 0 ? 'warn' : 'ok', text: parts.join(' · ') });
       }
       return next;
     });
@@ -88,7 +138,7 @@ export default function Builder() {
       h,
       config: null
     };
-    setWidgets(prev => [...prev, newWidget]);
+    setActiveWidgets(prev => [...prev, newWidget]);
   };
 
   const handleApplyTemplate = (layout) => {
@@ -96,15 +146,15 @@ export default function Builder() {
       ...w,
       id: `widget-${Date.now()}-${index}-${Math.floor(Math.random() * 1000)}`
     }));
-    setWidgets(newWidgets);
+    setActiveWidgets(newWidgets);
   };
-  
+
   const handleSave = () => {
-    localStorage.setItem('dia_saved_layout', JSON.stringify(widgets));
+    savePages(pages);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 2000);
   };
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
@@ -135,35 +185,34 @@ export default function Builder() {
             </span>
           )}
         </div>
-        
+
         <div className="flex items-center space-x-4">
-          <button 
+          <button
             onClick={() => {
-              setWidgets([]);
-              localStorage.removeItem('dia_saved_layout');
+              if (window.confirm(`Remove all widgets from "${activePage.name}"?`)) setActiveWidgets([]);
             }}
             className="text-sm font-medium text-gray-500 hover:text-red-600 transition-colors mr-2"
           >
-            Clear Dashboard
+            Clear Page
           </button>
-          
-          <button 
+
+          <button
             onClick={handleSave}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm border flex items-center ${saveSuccess ? 'bg-green-50 text-green-700 border-green-200' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
           >
             <i className={`fa-solid ${saveSuccess ? 'fa-check' : 'fa-floppy-disk'} mr-2`}></i>
             {saveSuccess ? 'Saved!' : 'Save Layout'}
           </button>
-          
-          <button 
+
+          <button
             onClick={toggleViewerMode}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm flex items-center ${isViewerMode ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 border'}`}
           >
             <i className={`fa-solid ${isViewerMode ? 'fa-eye-slash' : 'fa-eye'} mr-2`}></i>
             {isViewerMode ? 'Exit Preview' : 'Preview'}
           </button>
-          
-          <button 
+
+          <button
             onClick={() => navigate('/view')}
             className="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm flex items-center"
           >
@@ -174,19 +223,19 @@ export default function Builder() {
 
       {/* Main Workspace */}
       <div className="flex flex-1 overflow-hidden relative">
-        
+
         {/* Left Sidebar */}
-        <aside 
+        <aside
           className={`bg-white border-r border-gray-200 flex flex-col z-10 shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden ${isLeftOpen ? 'w-80' : 'w-0 opacity-0'}`}
         >
           <div className="flex border-b border-gray-200 w-80 shrink-0">
-            <button 
+            <button
               onClick={() => setActiveLeftTab('template')}
               className={`flex-1 py-3 text-sm font-semibold transition ${activeLeftTab === 'template' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
             >
               1. Template
             </button>
-            <button 
+            <button
               onClick={() => setActiveLeftTab('data')}
               className={`flex-1 py-3 text-sm font-semibold transition ${activeLeftTab === 'data' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
             >
@@ -206,7 +255,7 @@ export default function Builder() {
         <main className="flex-1 bg-gray-50/50 p-6 overflow-y-auto relative min-w-0 transition-all duration-300">
           {/* Left Sidebar Toggle Button */}
           {!isViewerMode && (
-            <button 
+            <button
               onClick={() => setIsLeftOpen(!isLeftOpen)}
               className="absolute top-1/2 -translate-y-1/2 left-0 z-20 bg-white border border-gray-200 border-l-0 shadow-sm rounded-r-md py-3 px-1.5 text-gray-400 hover:text-indigo-600 transition-colors focus:outline-none"
               title={isLeftOpen ? "Collapse Left Panel" : "Expand Left Panel"}
@@ -217,7 +266,7 @@ export default function Builder() {
 
           {/* Right Sidebar Toggle Button */}
           {!isViewerMode && (
-            <button 
+            <button
               onClick={() => setIsRightOpen(!isRightOpen)}
               className="absolute top-1/2 -translate-y-1/2 right-0 z-20 bg-white border border-gray-200 border-r-0 shadow-sm rounded-l-md py-3 px-1.5 text-gray-400 hover:text-indigo-600 transition-colors focus:outline-none"
               title={isRightOpen ? "Collapse Right Panel" : "Expand Right Panel"}
@@ -225,6 +274,72 @@ export default function Builder() {
               <i className={`fa-solid ${isRightOpen ? 'fa-chevron-right' : 'fa-chevron-left'} text-[10px]`}></i>
             </button>
           )}
+
+          {/* Page tabs */}
+          <div className="flex items-center mb-4 space-x-1 overflow-x-auto pb-1">
+            {pages.map(page => {
+              const isActive = page.id === activePage.id;
+              const isEditing = editingPageId === page.id;
+              return (
+                <div
+                  key={page.id}
+                  onClick={() => setActivePageId(page.id)}
+                  onDoubleClick={() => !isViewerMode && startRename(page)}
+                  className={`group flex items-center px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer border transition-all shrink-0 ${
+                    isActive
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300 hover:text-indigo-600'
+                  }`}
+                >
+                  <i className="fa-regular fa-file mr-2 text-xs opacity-70"></i>
+                  {isEditing ? (
+                    <input
+                      autoFocus
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') commitRename();
+                        if (e.key === 'Escape') setEditingPageId(null);
+                      }}
+                      onBlur={commitRename}
+                      className={`bg-transparent outline-none w-28 text-sm font-semibold border-b ${isActive ? 'text-white placeholder-white/50 border-white/40' : 'text-gray-700 border-indigo-300'}`}
+                      placeholder="Page name"
+                    />
+                  ) : (
+                    <span className="max-w-[160px] truncate">{page.name}</span>
+                  )}
+                  {!isViewerMode && !isEditing && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); startRename(page); }}
+                      className={`ml-2 opacity-0 group-hover:opacity-100 transition-opacity ${isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 hover:text-indigo-600'}`}
+                      title="Rename page"
+                    >
+                      <i className="fa-solid fa-pen text-[10px]"></i>
+                    </button>
+                  )}
+                  {!isViewerMode && !isEditing && pages.length > 1 && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeletePage(page); }}
+                      className={`ml-1.5 opacity-0 group-hover:opacity-100 transition-opacity ${isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 hover:text-red-500'}`}
+                      title="Delete page"
+                    >
+                      <i className="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+            {!isViewerMode && (
+              <button
+                onClick={handleAddPage}
+                className="flex items-center px-3 py-2 rounded-lg text-sm font-semibold text-gray-500 border border-dashed border-gray-300 hover:border-indigo-400 hover:text-indigo-600 transition-colors bg-white shrink-0"
+                title="Add page"
+              >
+                <i className="fa-solid fa-plus mr-1.5 text-xs"></i> Page
+              </button>
+            )}
+          </div>
 
           {dataNotice && (
             <div className={`mb-4 px-4 py-2.5 rounded-lg text-sm font-medium border flex items-center ${dataNotice.tone === 'warn' ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`}>
@@ -234,15 +349,16 @@ export default function Builder() {
           )}
 
           <GridCanvas
-            widgets={widgets}
-            setWidgets={setWidgets} 
-            isReadonly={isViewerMode} 
+            key={activePage.id}
+            widgets={activePage.widgets}
+            setWidgets={setActiveWidgets}
+            isReadonly={isViewerMode}
             onConfigureWidget={handleConfigureWidget}
           />
         </main>
 
         {/* Right Sidebar - Chart Toolbox */}
-        <aside 
+        <aside
           className={`bg-white border-l border-gray-200 flex flex-col z-10 shadow-[-4px_0_24px_rgba(0,0,0,0.02)] transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden ${isRightOpen ? 'w-80' : 'w-0 opacity-0'}`}
         >
           <div className="w-80 h-full">
@@ -252,13 +368,13 @@ export default function Builder() {
 
       </div>
 
-      <DataConfigModal 
-        isOpen={isConfigModalOpen} 
-        onClose={() => setIsConfigModalOpen(false)} 
-        widgetId={configuringWidgetId} 
-        widgets={widgets} 
-        setWidgets={setWidgets} 
-        loadedDataSheets={loadedDataSheets} 
+      <DataConfigModal
+        isOpen={isConfigModalOpen}
+        onClose={() => setIsConfigModalOpen(false)}
+        widgetId={configuringWidgetId}
+        widgets={activePage.widgets}
+        setWidgets={setActiveWidgets}
+        loadedDataSheets={loadedDataSheets}
       />
     </div>
   );
