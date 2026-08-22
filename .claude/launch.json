@@ -4,9 +4,30 @@
     {
       "name": "dia-frontend",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "5173", "--strictPort"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5173",
+        "--strictPort"
+      ],
       "cwd": "frontend/dia",
       "port": 5173
+    },
+    {
+      "name": "dia-preview",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "preview",
+        "--",
+        "--port",
+        "4173",
+        "--strictPort"
+      ],
+      "cwd": "frontend/dia",
+      "port": 4173
     }
   ]
 }

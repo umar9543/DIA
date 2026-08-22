@@ -61,6 +61,22 @@ export default function DashboardView() {
         windowWidth: document.documentElement.clientWidth,
         windowHeight: document.documentElement.clientHeight,
         onclone: (doc) => {
+          // The clone renders as soon as its iframe reports loaded. In production the
+          // app's CSS is an external file served from a CDN, and on a slow fetch the
+          // render wins the race and the snapshot comes out unstyled. Inline the rules
+          // that are already loaded here and drop the same-origin <link> tags so the
+          // clone never depends on the network.
+          const inlineCss = [...document.styleSheets].map(sheet => {
+            try { return [...sheet.cssRules].map(rule => rule.cssText).join('\n'); } catch { return ''; }
+          }).join('\n');
+          if (inlineCss) {
+            doc.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+              try { if (new URL(link.href, location.href).origin === location.origin) link.remove(); } catch { /* keep */ }
+            });
+            const style = doc.createElement('style');
+            style.textContent = inlineCss;
+            doc.head.appendChild(style);
+          }
           doc.querySelectorAll('*').forEach(node => { node.style.boxShadow = 'none'; });
           const clonedGrid = doc.querySelector('main .grid-stack');
           if (clonedGrid) {
