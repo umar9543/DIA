@@ -152,23 +152,27 @@ export default function DataUploader({ onDataLoaded, onDataRemoved, loadedDataSh
           <div className="bg-amber-50 border-l-4 border-amber-400 p-3 rounded-md mx-2 mt-2 text-xs text-amber-800 font-medium">{warning}</div>
         )}
 
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mx-2 mt-2">
-          <div className="flex items-start">
-            <div className="bg-emerald-100 p-2 rounded-lg text-emerald-600 mr-3 shrink-0">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mx-2 mt-2 whitespace-normal">
+          <div className="flex items-center">
+            <div className="w-9 h-9 bg-emerald-100 rounded-lg text-emerald-600 mr-3 shrink-0 flex items-center justify-center">
               <i className="fa-solid fa-database"></i>
             </div>
             <div className="min-w-0 flex-1">
-              <h4 className="text-sm font-bold text-slate-800">Workspace data</h4>
-              <p className="text-xs text-emerald-600 font-semibold mt-1">
-                {fileNames.length} file{fileNames.length === 1 ? '' : 's'} · {activeSheets.length} sheet{activeSheets.length === 1 ? '' : 's'} · stored only in this browser
+              <h4 className="text-sm font-bold text-slate-800 leading-tight">Workspace data</h4>
+              <p className="text-xs text-emerald-700 font-semibold mt-0.5">
+                {fileNames.length} file{fileNames.length === 1 ? '' : 's'} · {activeSheets.length} sheet{activeSheets.length === 1 ? '' : 's'}
               </p>
             </div>
           </div>
-          <div className="flex space-x-2 mt-3">
+          <p className="text-[11px] text-emerald-600 font-medium mt-2.5 flex items-center">
+            <i className="fa-solid fa-lock text-[10px] mr-1.5 shrink-0"></i>
+            Stored only in this browser
+          </p>
+          <div className="grid grid-cols-2 gap-2 mt-3">
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isRemoving || isUploading}
-              className="flex-1 bg-white border border-emerald-200 hover:border-emerald-400 text-emerald-700 text-xs font-bold px-3 py-2 rounded-lg transition-colors disabled:opacity-50"
+              className="bg-white border border-emerald-200 hover:border-emerald-400 text-emerald-700 text-xs font-bold px-2 py-2 rounded-lg transition-colors disabled:opacity-50 whitespace-nowrap"
               title="Load another Excel/CSV file. Re-uploading a file with the same name replaces it and recalculates its charts."
             >
               {isUploading ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <><i className="fa-solid fa-plus mr-1.5"></i>Add file</>}
@@ -176,7 +180,7 @@ export default function DataUploader({ onDataLoaded, onDataRemoved, loadedDataSh
             <button
               onClick={handleRemoveAll}
               disabled={isRemoving || isUploading}
-              className="flex-1 bg-white border border-slate-200 hover:border-red-300 hover:text-red-600 text-slate-600 text-xs font-bold px-3 py-2 rounded-lg transition-colors disabled:opacity-50"
+              className="bg-white border border-slate-200 hover:border-red-300 hover:text-red-600 text-slate-600 text-xs font-bold px-2 py-2 rounded-lg transition-colors disabled:opacity-50 whitespace-nowrap"
               title="Delete all loaded rows from this browser and the stored column names from the server."
             >
               {isRemoving ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <><i className="fa-solid fa-trash mr-1.5"></i>Remove all</>}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { GridStack } from 'gridstack';
 import ChartWidget from '../Charts/ChartWidget';
 
@@ -23,17 +23,22 @@ export default function GridCanvas({ widgets, setWidgets, isReadonly = false, on
     gridInstance.current.on('added', (event, items) => {
       // items are the DOM elements dropped in
       if (!items || items.length === 0) return;
-      
+
       const newWidgets = [];
-      
+
       items.forEach(item => {
         // Only process external drops (they will have data-type from toolbox)
         if (item.el && item.el.hasAttribute('data-type')) {
+          // React StrictMode can leave two live grid instances, each announcing the
+          // same drop — process every dropped element exactly once.
+          if (item.el.__diaProcessed) return;
+          item.el.__diaProcessed = true;
           const type = item.el.getAttribute('data-type');
-          
-          // Remove the dummy DOM element GridStack added (we let React render it!)
-          gridInstance.current.removeWidget(item.el, false);
-          
+
+          // Remove GridStack's dropped clone including its DOM node (second arg!),
+          // without firing 'removed' — React renders the real widget itself.
+          gridInstance.current.removeWidget(item.el, true, false);
+
           newWidgets.push({
             id: `widget-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
             type: type,
@@ -45,32 +50,38 @@ export default function GridCanvas({ widgets, setWidgets, isReadonly = false, on
           });
         }
       });
-      
+
       if (newWidgets.length > 0) {
         setWidgets(prev => [...prev, ...newWidgets]);
       }
     });
 
-    // Handle moving/resizing existing widgets
-    gridInstance.current.on('change', (event, items) => {
-      if (!items) return;
-      
+    // Sync positions into React only when a gesture ENDS. Doing it on 'change'
+    // re-rendered every chart on each cell crossing and made dragging stutter.
+    const syncPositionsFromEngine = () => {
+      const nodes = gridInstance.current?.engine?.nodes || [];
+      const byId = new Map(nodes.map(n => [n.el?.getAttribute('gs-id'), n]));
       setWidgets(prev => {
-        const next = [...prev];
-        items.forEach(item => {
-          if (!item.id) return;
-          const idx = next.findIndex(w => w.id === item.id);
-          if (idx !== -1) {
-            next[idx] = { ...next[idx], x: item.x, y: item.y, w: item.w, h: item.h };
-          }
+        let changed = false;
+        const next = prev.map(w => {
+          const n = byId.get(w.id);
+          if (!n) return w;
+          if (w.x === n.x && w.y === n.y && w.w === n.w && w.h === n.h) return w;
+          changed = true;
+          return { ...w, x: n.x, y: n.y, w: n.w, h: n.h };
         });
-        return next;
+        return changed ? next : prev;
       });
-    });
+    };
+    gridInstance.current.on('dragstop', syncPositionsFromEngine);
+    gridInstance.current.on('resizestop', syncPositionsFromEngine);
+    // An external drop can push existing widgets aside; capture their new spots too.
+    gridInstance.current.on('dropped', () => setTimeout(syncPositionsFromEngine, 0));
 
     return () => {
       if (gridInstance.current) {
         gridInstance.current.destroy(false);
+        gridInstance.current = null;
       }
     };
   }, []);
@@ -91,7 +102,7 @@ export default function GridCanvas({ widgets, setWidgets, isReadonly = false, on
   // When React updates the DOM with new widgets, we need to tell Gridstack to track them
   useEffect(() => {
     if (!gridInstance.current || !gridRef.current) return;
-    
+
     // 1. Sync deletions: Remove widgets from GridStack engine that React has removed
     const engineNodes = gridInstance.current.engine.nodes;
     [...engineNodes].forEach(node => {
@@ -106,7 +117,24 @@ export default function GridCanvas({ widgets, setWidgets, isReadonly = false, on
       gridInstance.current.makeWidget(el);
       el.classList.add('grid-stack-item-initialized');
     });
-  }, [widgets]);
+
+    // Click-added widgets are auto-placed by the engine; store the assigned spot.
+    if (uninitialized.length > 0) {
+      const nodes = gridInstance.current.engine.nodes;
+      const byId = new Map(nodes.map(n => [n.el?.getAttribute('gs-id'), n]));
+      setWidgets(prev => {
+        let changed = false;
+        const next = prev.map(w => {
+          if (w.x !== undefined) return w;
+          const n = byId.get(w.id);
+          if (!n) return w;
+          changed = true;
+          return { ...w, x: n.x, y: n.y, w: n.w, h: n.h };
+        });
+        return changed ? next : prev;
+      });
+    }
+  }, [widgets, setWidgets]);
 
   const removeWidget = (id) => {
     setWidgets(prev => prev.filter(w => w.id !== id));
@@ -124,10 +152,10 @@ export default function GridCanvas({ widgets, setWidgets, isReadonly = false, on
   };
 
   return (
-    <div className="bg-white/50 border-2 border-dashed border-gray-300 rounded-xl min-h-[500px]">
-      <div ref={gridRef} className="grid-stack">
+    <div className="bg-white/50 border-2 border-dashed border-gray-300 rounded-xl">
+      <div ref={gridRef} className="grid-stack min-h-[500px]">
         {widgets.map(widget => (
-          <div 
+          <div
             key={widget.id}
             className="grid-stack-item"
             gs-id={widget.id}
@@ -138,9 +166,9 @@ export default function GridCanvas({ widgets, setWidgets, isReadonly = false, on
             gs-auto-position={widget.x === undefined ? "true" : undefined}
           >
             <div className="grid-stack-item-content bg-transparent shadow-none p-0 overflow-visible">
-              <ChartWidget 
-                widget={widget} 
-                onRemove={removeWidget} 
+              <ChartWidget
+                widget={widget}
+                onRemove={removeWidget}
                 onConfigure={handleConfigure}
                 isReadonly={isReadonly}
               />
@@ -148,7 +176,7 @@ export default function GridCanvas({ widgets, setWidgets, isReadonly = false, on
           </div>
         ))}
       </div>
-      
+
       {widgets.length === 0 && (
         <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
           <p className="text-gray-400 font-medium">Drag and drop a chart from the toolbox here</p>

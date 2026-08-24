@@ -21,3 +21,11 @@
     margin-bottom: 1rem !important;
   }
 }
+
+/* GridStack drag helpers are clones of toolbox cards, which carry Tailwind's
+   transition-all for hover effects. A transition on the helper animates every
+   cursor update ~150ms late, making dragging feel stuck. Track instantly. */
+.ui-draggable-dragging,
+.grid-stack-item.ui-resizable-resizing {
+  transition: none !important;
+}
