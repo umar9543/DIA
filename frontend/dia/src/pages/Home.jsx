@@ -22,7 +22,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-indigo-200">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-[#c7d7ee]">
 
       {/* Navbar */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-lg shadow-sm border-b border-slate-200/50 py-3' : 'bg-transparent py-5'}`}>
@@ -32,25 +32,25 @@ export default function Home() {
           </div>
 
           <div className="hidden md:flex items-center space-x-8 absolute left-1/2 -translate-x-1/2">
-            <a href="#features" className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">Features</a>
-            <a href="#how-it-works" className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">How it works</a>
-            <a href="#security" className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">Security</a>
+            <a href="#features" className="text-sm font-semibold text-slate-600 hover:text-[#274F91] transition-colors">Features</a>
+            <a href="#how-it-works" className="text-sm font-semibold text-slate-600 hover:text-[#274F91] transition-colors">How it works</a>
+            <a href="#security" className="text-sm font-semibold text-slate-600 hover:text-[#274F91] transition-colors">Security</a>
           </div>
 
           <div className="flex items-center space-x-4 z-10">
             {isLoggedIn ? (
               <Link
                 to={hasLayout ? "/view" : "/builder"}
-                className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-all hover:shadow-lg hover:shadow-slate-900/20 hover:-translate-y-0.5"
+                className="btn-brand text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-all hover:shadow-lg hover:shadow-[#274F91]/25 hover:-translate-y-0.5"
               >
                 Go to Dashboard
               </Link>
             ) : (
               <>
-                <Link to="/auth" className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors px-2">Sign In</Link>
+                <Link to="/auth" className="text-sm font-semibold text-slate-600 hover:text-[#274F91] transition-colors px-2">Sign In</Link>
                 <Link
                   to="/auth"
-                  className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-all hover:shadow-lg hover:shadow-slate-900/20 hover:-translate-y-0.5"
+                  className="btn-brand text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-all hover:shadow-lg hover:shadow-[#274F91]/25 hover:-translate-y-0.5"
                 >
                   Get Started
                 </Link>
@@ -63,20 +63,20 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative pt-40 pb-20 lg:pt-48 lg:pb-32 overflow-hidden flex justify-center items-center flex-col px-6 text-center">
         {/* Abstract Background Meshes */}
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-200/50 rounded-full blur-[120px] pointer-events-none mix-blend-multiply"></div>
-        <div className="absolute top-[20%] right-[-10%] w-[40%] h-[40%] bg-purple-200/50 rounded-full blur-[100px] pointer-events-none mix-blend-multiply"></div>
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#274F91]/15 rounded-full blur-[120px] pointer-events-none mix-blend-multiply"></div>
+        <div className="absolute top-[20%] right-[-10%] w-[40%] h-[40%] bg-[#4A7BC8]/15 rounded-full blur-[100px] pointer-events-none mix-blend-multiply"></div>
 
-        <div className="inline-flex items-center space-x-2 bg-indigo-50 border border-indigo-100 rounded-full px-4 py-1.5 mb-8 animate-fade-in-up">
+        <div className="inline-flex items-center space-x-2 bg-[#EDF1F8] border border-[#d7e2f2] rounded-full px-4 py-1.5 mb-8 animate-fade-in-up">
           <span className="flex h-2 w-2 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4A7BC8] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#274F91]"></span>
           </span>
-          <span className="text-xs font-bold text-indigo-700 tracking-wide uppercase">Zero Data Retention Architecture</span>
+          <span className="text-xs font-bold text-[#274F91] tracking-wide uppercase">Zero Data Retention Architecture</span>
         </div>
 
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-slate-900 mb-6 max-w-4xl leading-[1.1] animate-fade-in-up" style={{ animationDelay: '100ms', fontFamily: "'Space Grotesk', 'DM Sans', sans-serif", letterSpacing: '-0.02em' }}>
           The Dashboard Builder for <br className="hidden md:block" />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">Enterprise Privacy.</span>
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#274F91] to-[#4A7BC8]">Enterprise Privacy.</span>
         </h1>
 
         <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto font-medium animate-fade-in-up" style={{ animationDelay: '200ms' }}>
@@ -86,7 +86,7 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
           <Link
             to={isLoggedIn ? (hasLayout ? "/view" : "/builder") : "/auth"}
-            className="w-full sm:w-auto px-8 py-4 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg shadow-xl shadow-indigo-600/30 transition-all hover:-translate-y-1"
+            className="w-full sm:w-auto px-8 py-4 rounded-full bg-[#274F91] hover:bg-[#1E3F74] text-white font-bold text-lg shadow-xl shadow-[#274F91]/30 transition-all hover:-translate-y-1"
           >
             {isLoggedIn ? "Go to Dashboard" : "Get Started"}
           </Link>
@@ -127,18 +127,18 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* ZDR (wide) */}
             <div id="security" className="group bg-slate-50 rounded-3xl p-8 border border-slate-200/60 hover:shadow-2xl hover:shadow-slate-200/50 hover:bg-white transition-all duration-500 overflow-hidden relative md:col-span-2 scroll-mt-24">
-              <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                <i className="fa-solid fa-shield-halved text-xl text-emerald-600"></i>
+              <div className="w-12 h-12 bg-[#EDF1F8] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                <i className="fa-solid fa-shield-halved text-xl text-[#274F91]"></i>
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">Zero Data Retention</h3>
               <p className="text-slate-600 leading-relaxed font-medium max-w-xl">Your spreadsheet is parsed in your browser and its rows stay there. We store only sheet names, column headers and your dashboard layout — every calculation runs on your device. Designed for GDPR compliance.</p>
-              <div className="absolute -right-8 -bottom-8 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-colors duration-500"></div>
+              <div className="absolute -right-8 -bottom-8 w-60 h-60 bg-[#274F91]/10 rounded-full blur-3xl group-hover:bg-[#274F91]/20 transition-colors duration-500"></div>
             </div>
 
             {/* Builder */}
             <div className="group bg-slate-50 rounded-3xl p-8 border border-slate-200/60 hover:shadow-2xl hover:shadow-slate-200/50 hover:bg-white transition-all duration-500 overflow-hidden relative">
-              <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                <i className="fa-solid fa-table-cells-large text-xl text-indigo-600"></i>
+              <div className="w-12 h-12 bg-[#EDF1F8] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                <i className="fa-solid fa-table-cells-large text-xl text-[#274F91]"></i>
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">Drag &amp; Drop Builder</h3>
               <p className="text-slate-600 leading-relaxed font-medium">Ten widget types — bar, line, pie, doughnut, radar, bubble, funnel, gauge, KPI cards and tables — on an auto-snapping grid. Duplicate a configured card with one click.</p>
@@ -146,8 +146,8 @@ export default function Home() {
 
             {/* Multi-page */}
             <div className="group bg-slate-50 rounded-3xl p-8 border border-slate-200/60 hover:shadow-2xl hover:shadow-slate-200/50 hover:bg-white transition-all duration-500 overflow-hidden relative">
-              <div className="w-12 h-12 bg-sky-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                <i className="fa-solid fa-layer-group text-xl text-sky-600"></i>
+              <div className="w-12 h-12 bg-[#EDF1F8] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                <i className="fa-solid fa-layer-group text-xl text-[#274F91]"></i>
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">Multi-Page Dashboards</h3>
               <p className="text-slate-600 leading-relaxed font-medium">Organise your report into named pages and combine several Excel files in one workspace — each page shows the data that belongs there.</p>
@@ -155,8 +155,8 @@ export default function Home() {
 
             {/* Aggregations */}
             <div className="group bg-slate-50 rounded-3xl p-8 border border-slate-200/60 hover:shadow-2xl hover:shadow-slate-200/50 hover:bg-white transition-all duration-500 overflow-hidden relative">
-              <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                <i className="fa-solid fa-calculator text-xl text-amber-600"></i>
+              <div className="w-12 h-12 bg-[#EDF1F8] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                <i className="fa-solid fa-calculator text-xl text-[#274F91]"></i>
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">Smart Aggregations</h3>
               <p className="text-slate-600 leading-relaxed font-medium">Sum, average, count and distinct counts, ABC/Pareto segmentation, calendar-aware month sorting and currency-formatted KPIs — blank cells never distort a number.</p>
@@ -164,8 +164,8 @@ export default function Home() {
 
             {/* Drill-down tables */}
             <div className="group bg-slate-50 rounded-3xl p-8 border border-slate-200/60 hover:shadow-2xl hover:shadow-slate-200/50 hover:bg-white transition-all duration-500 overflow-hidden relative">
-              <div className="w-12 h-12 bg-violet-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                <i className="fa-solid fa-folder-tree text-xl text-violet-600"></i>
+              <div className="w-12 h-12 bg-[#EDF1F8] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                <i className="fa-solid fa-folder-tree text-xl text-[#274F91]"></i>
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">Drill-Down Tables</h3>
               <p className="text-slate-600 leading-relaxed font-medium">Pivot-style hierarchies you define by picking columns in order — expandable groups, live search and totals that follow your filter.</p>
@@ -173,8 +173,8 @@ export default function Home() {
 
             {/* Refresh */}
             <div className="group bg-slate-50 rounded-3xl p-8 border border-slate-200/60 hover:shadow-2xl hover:shadow-slate-200/50 hover:bg-white transition-all duration-500 overflow-hidden relative md:col-span-2">
-              <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                <i className="fa-solid fa-rotate text-xl text-emerald-600"></i>
+              <div className="w-12 h-12 bg-[#EDF1F8] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                <i className="fa-solid fa-rotate text-xl text-[#274F91]"></i>
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">Monthly Refresh in Seconds</h3>
               <p className="text-slate-600 leading-relaxed font-medium">Next month, drop in the new file — every chart on every page recalculates automatically. Your layout does the work once.</p>
@@ -182,8 +182,8 @@ export default function Home() {
 
             {/* Themes */}
             <div className="group bg-slate-50 rounded-3xl p-8 border border-slate-200/60 hover:shadow-2xl hover:shadow-slate-200/50 hover:bg-white transition-all duration-500 overflow-hidden relative">
-              <div className="w-12 h-12 bg-rose-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                <i className="fa-solid fa-palette text-xl text-rose-600"></i>
+              <div className="w-12 h-12 bg-[#EDF1F8] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                <i className="fa-solid fa-palette text-xl text-[#274F91]"></i>
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">Theme Palettes</h3>
               <p className="text-slate-600 leading-relaxed font-medium">Seven curated palettes — including an IBCS-style report look — recolor every chart with one click, so dashboards match your corporate identity.</p>

@@ -30,3 +30,9 @@
 .grid-stack-item.ui-resizable-resizing {
   transition: none !important;
 }
+
+/* Brand nav button. Plain, unlayered CSS on purpose: the Tailwind arbitrary
+   bg utility inexplicably failed to apply on the nav anchors (clone of the
+   same node worked). Unlayered + !important ends that mystery. */
+.btn-brand { background-color: #274F91 !important; }
+.btn-brand:hover { background-color: #1E3F74 !important; }
