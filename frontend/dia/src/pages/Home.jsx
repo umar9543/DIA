@@ -4,31 +4,25 @@ import { DiaLogo } from '../components/Brand/Logo';
 import { DEMO_MODE } from '../utils/demo';
 
 export default function Home() {
-  const [scrolled, setScrolled] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [hasLayout, setHasLayout] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-
     // Check auth and layout status
     setIsLoggedIn(DEMO_MODE || !!localStorage.getItem('dia_token'));
     setHasLayout(!!localStorage.getItem('dia_saved_layout'));
 
-    return () => window.removeEventListener('scroll', handleScroll);
+    return undefined;
   }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-[#c7d7ee]">
 
       {/* Navbar */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-lg shadow-sm border-b border-slate-200/50 py-3' : 'bg-transparent py-5'}`}>
+            <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-slate-200/60 py-3">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between relative">
           <div className="flex items-center space-x-3 cursor-pointer z-10">
-            <DiaLogo size={36} />
+            <DiaLogo size={44} />
           </div>
 
           <div className="hidden md:flex items-center space-x-8 absolute left-1/2 -translate-x-1/2">

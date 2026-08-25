@@ -7,7 +7,7 @@ import pptxgen from 'pptxgenjs';
 import ChartWidget from '../components/Charts/ChartWidget';
 import { loadPages, loadThemeKey } from '../utils/layout';
 import { buildDashboardHtml } from '../utils/htmlExport';
-import { DiaMark } from '../components/Brand/Logo';
+import { DiaMark, DiaLogo } from '../components/Brand/Logo';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -246,12 +246,8 @@ export default function DashboardView() {
         {/* Pages Sidebar */}
         {pages.length > 0 && (
           <aside className="w-64 bg-white text-slate-600 flex flex-col shrink-0 overflow-y-auto border-r border-slate-200">
-            <div className="flex items-center space-x-3 px-5 pt-6 pb-5">
-              <DiaMark size={36} />
-              <div>
-                <div className="text-[17px] leading-tight" style={{ color: '#274F91', fontFamily: "'Space Grotesk', 'DM Sans', sans-serif", fontWeight: 700 }}>DIA</div>
-                <div className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: '#274F91' }}>Data into Action</div>
-              </div>
+            <div className="flex items-center px-5 pt-6 pb-5">
+              <DiaLogo size={38} />
             </div>
 
             <div className="px-6 pb-2.5 text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">

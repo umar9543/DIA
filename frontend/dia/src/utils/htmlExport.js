@@ -1,11 +1,12 @@
 import chartJsSource from '../../node_modules/chart.js/dist/chart.umd.js?raw';
 import datalabelsSource from '../../node_modules/chartjs-plugin-datalabels/dist/chartjs-plugin-datalabels.min.js?raw';
 import { getTheme } from './themes';
+import lockupInline from '../assets/brand/dia-lockup-sm.png?inline';
 
 const escapeHtml = (value) =>
   String(value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-const LOGO_SVG = `<svg width="34" height="34" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="27.5" stroke="#274F91" stroke-width="4.5" fill="white"/><text x="32" y="42.5" text-anchor="middle" font-family="'Space Grotesk','DM Sans','Segoe UI',sans-serif" font-weight="700" font-size="26" fill="#274F91" letter-spacing="0.5">DıA</text><path d="M28.5 21.5 L32 15.5 L35.5 21.5" stroke="#274F91" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
+const LOGO_IMG = `<img src="${lockupInline}" alt="DIA — Data into Action" style="display:block;height:38px;width:auto"/>`;
 
 // The in-page renderer. Deliberately written without template literals so it can
 // live inside the outer template string unescaped. It receives DIA_DATA
@@ -406,11 +407,7 @@ export function buildDashboardHtml(pages, { title = 'DIA Dashboard', themeKey } 
 <body>
 <aside>
   <div class="brand">
-    ${LOGO_SVG}
-    <div>
-      <div class="brand-name" style="color:#274F91">DIA</div>
-      <div class="brand-sub" style="color:#274F91;letter-spacing:.14em;text-transform:uppercase;font-size:10px">Data into Action</div>
-    </div>
+    ${LOGO_IMG}
   </div>
   <div class="section-label">Pages</div>
   <nav>
