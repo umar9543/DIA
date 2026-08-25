@@ -56,6 +56,9 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
   const [dataLimit, setDataLimit] = useState('top_20');
   const [selectedColumns, setSelectedColumns] = useState([]);
   const [customTitle, setCustomTitle] = useState('');
+  const [currency, setCurrency] = useState('');
+  const [tableMode, setTableMode] = useState('flat');
+  const [tableMeasure, setTableMeasure] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
 
@@ -71,6 +74,9 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
         setDataLimit(widget.config.dataLimit || 'top_20');
         setSelectedColumns(widget.config.selectedColumns || []);
         setCustomTitle(widget.config.customTitle || '');
+        setCurrency(widget.config.currency || '');
+        setTableMode(widget.config.tableMode || 'flat');
+        setTableMeasure(widget.config.tableMeasure || '');
       } else {
         // Reset defaults
         if (loadedDataSheets && loadedDataSheets.length > 0) {
@@ -82,6 +88,9 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
         setDataLimit('top_20');
         setSelectedColumns([]);
         setCustomTitle('');
+        setCurrency('');
+        setTableMode('flat');
+        setTableMeasure('');
       }
       setError(null);
     }
@@ -98,10 +107,11 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
   const widget = widgets.find(w => w.id === widgetId);
   const isSingleValue = ['kpi', 'speedometer'].includes(widget?.type);
   const isTable = widget?.type === 'table';
-  const isLineChart = widget?.type === 'line';
   const isRadar = widget?.type === 'radar';
   const isBubble = widget?.type === 'bubble';
   const isMultiMeasure = isRadar || isBubble;
+  // ABC segmentation only makes sense on comparison charts.
+  const isComparison = ['bar', 'pie', 'doughnut'].includes(widget?.type);
 
   const handleSave = async () => {
     if (!selectedSheet) {
@@ -139,6 +149,9 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
         aggregation,
         dataLimit,
         selectedColumns,
+        tableMode,
+        tableMeasure,
+        currency,
         customTitle
       }, allRawData);
 
@@ -161,7 +174,7 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
       ></div>
 
       {/* Modal */}
-      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all border border-slate-100">
+      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all border border-slate-100 max-h-[90vh] flex flex-col">
 
         <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <h3 className="text-lg font-bold text-slate-800 flex items-center">
@@ -176,7 +189,7 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 overflow-y-auto flex-1 min-h-0">
           {error && (
             <div className="bg-red-50 border-l-4 border-red-500 p-3 rounded-md text-sm text-red-700 font-medium">
               {error}
@@ -205,26 +218,65 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
               {isTable ? (
                 <>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Columns to Display</label>
-                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
-                    {columns.map(col => (
-                      <label key={col} className="flex items-center space-x-3 cursor-pointer group">
-                        <input
-                          type="checkbox"
-                          checked={selectedColumns.includes(col)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedColumns([...selectedColumns, col]);
-                            } else {
-                              setSelectedColumns(selectedColumns.filter(c => c !== col));
-                            }
-                          }}
-                          className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer"
-                        />
-                        <span className="text-sm font-medium text-slate-700 group-hover:text-indigo-600 transition-colors">{col}</span>
-                      </label>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Table Type</label>
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    {[{ v: 'flat', l: 'Flat rows' }, { v: 'tree', l: 'Hierarchy (expandable)' }].map(opt => (
+                      <button
+                        key={opt.v}
+                        onClick={() => setTableMode(opt.v)}
+                        className={`py-2 px-3 text-xs font-bold rounded-lg border transition-all ${tableMode === opt.v ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                      >
+                        {opt.l}
+                      </button>
                     ))}
                   </div>
+
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">
+                    {tableMode === 'tree' ? 'Group by (in order)' : 'Columns to Display'}
+                  </label>
+                  {tableMode === 'tree' && (
+                    <p className="text-[11px] text-slate-400 font-medium mb-1.5">The order you tick columns is the drill-down order: 1st level › 2nd level › …</p>
+                  )}
+                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
+                    {columns.map(col => {
+                      const order = selectedColumns.indexOf(col);
+                      return (
+                        <label key={col} className="flex items-center space-x-3 cursor-pointer group">
+                          <input
+                            type="checkbox"
+                            checked={order !== -1}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedColumns([...selectedColumns, col]);
+                              } else {
+                                setSelectedColumns(selectedColumns.filter(c => c !== col));
+                              }
+                            }}
+                            className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer"
+                          />
+                          <span className="text-sm font-medium text-slate-700 group-hover:text-indigo-600 transition-colors flex-1">{col}</span>
+                          {tableMode === 'tree' && order !== -1 && (
+                            <span className="w-5 h-5 rounded-md bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0">{order + 1}</span>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
+
+                  {tableMode === 'tree' && (
+                    <div className="mt-4">
+                      <label className="block text-sm font-bold text-slate-700 mb-1.5">
+                        Value column <span className="text-xs font-normal text-slate-400">(Optional, summed per group)</span>
+                      </label>
+                      <CustomSelect
+                        value={tableMeasure}
+                        onChange={(val) => setTableMeasure(val === '— none —' ? '' : val)}
+                        placeholder="Row count only"
+                        disabled={!selectedSheet}
+                        options={['— none —', ...columns.filter(c => !selectedColumns.includes(c))].map(col => ({ value: col, label: col }))}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Title – after the column selection */}
@@ -300,6 +352,23 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
                     </div>
                   )}
 
+                  {isSingleValue && (
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1.5">Currency <span className="text-xs font-normal text-slate-400">(Optional)</span></label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[{ v: '', l: 'None' }, { v: '€', l: '€ Euro' }, { v: '$', l: '$ Dollar' }].map(opt => (
+                        <button
+                          key={opt.v || 'none'}
+                          onClick={() => setCurrency(opt.v)}
+                          className={`py-2 px-3 text-xs font-bold rounded-lg border transition-all ${currency === opt.v ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                        >
+                          {opt.l}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  )}
+
                   {/* Title – after the column selection */}
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-1.5">Custom Title <span className="text-xs font-normal text-slate-400">(Optional)</span></label>
@@ -317,8 +386,11 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-1.5">Aggregation Method</label>
                     <div className="grid grid-cols-4 gap-2">
-                      {['sum', 'average', 'count', 'segmentation']
-                        .filter(agg => !(isLineChart && agg === 'segmentation'))
+                      {(isSingleValue
+                        ? ['sum', 'average', 'count', 'distinct']
+                        : isComparison
+                          ? ['sum', 'average', 'count', 'segmentation']
+                          : ['sum', 'average', 'count'])
                         .map(agg => (
                         <button
                           key={agg}
@@ -329,7 +401,7 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
                               : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                           }`}
                         >
-                          {agg === 'segmentation' ? 'ABC Segment' : agg.charAt(0).toUpperCase() + agg.slice(1)}
+                          {agg === 'segmentation' ? 'ABC Segment' : agg === 'distinct' ? 'Distinct' : agg.charAt(0).toUpperCase() + agg.slice(1)}
                         </button>
                       ))}
                     </div>
@@ -359,7 +431,7 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
           )}
         </div>
 
-        <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end space-x-3">
+        <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end space-x-3 shrink-0">
           <button
             onClick={onClose}
             className="px-4 py-2 text-sm font-bold text-slate-600 hover:text-slate-800 transition-colors"

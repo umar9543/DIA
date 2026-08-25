@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { API_BASE } from '../utils/api';
+import { DiaLogo } from '../components/Brand/Logo';
 import { DEMO_MODE } from '../utils/demo';
 
 export default function Auth() {
@@ -51,33 +52,22 @@ function AuthForm() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden font-sans">
-      
+
       {/* Background Meshes */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-200/50 rounded-full blur-[120px] pointer-events-none mix-blend-multiply"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-200/50 rounded-full blur-[100px] pointer-events-none mix-blend-multiply"></div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <Link to="/" className="flex items-center justify-center space-x-3 cursor-pointer mb-8 group transition-transform hover:scale-105">
-            <svg className="w-10 h-10 drop-shadow-md" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M6 4H16C22.6274 4 28 9.37258 28 16C28 22.6274 22.6274 28 16 28H6V4Z" fill="url(#auth-grad)"/>
-              <path d="M6 14H12C16.4183 14 20 17.5817 20 22C20 26.4183 16.4183 28 12 28H6V14Z" fill="white" fillOpacity="0.15"/>
-              <circle cx="15" cy="16" r="3.5" fill="white"/>
-              <defs>
-                <linearGradient id="auth-grad" x1="6" y1="4" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#4F46E5" />
-                  <stop offset="1" stopColor="#7C3AED" />
-                </linearGradient>
-              </defs>
-            </svg>
-            <span className="text-3xl font-black tracking-tight text-slate-900 group-hover:text-indigo-600 transition-colors">DIA</span>
+            <DiaLogo size={46} />
         </Link>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 tracking-tight">
           {isLogin ? 'Sign in to your account' : 'Create your account'}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600 font-medium">
           Or{' '}
-          <button 
-            onClick={() => setIsLogin(!isLogin)} 
+          <button
+            onClick={() => setIsLogin(!isLogin)}
             className="font-bold text-indigo-600 hover:text-indigo-500 transition-colors focus:outline-none"
           >
             {isLogin ? 'start your 14-day free trial' : 'sign in to your existing account'}

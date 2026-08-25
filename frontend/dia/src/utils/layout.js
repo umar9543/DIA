@@ -31,6 +31,14 @@ export function loadPages() {
   return null;
 }
 
-export function savePages(pages) {
-  localStorage.setItem(LAYOUT_KEY, JSON.stringify({ version: 2, pages }));
+export function savePages(pages, themeKey) {
+  localStorage.setItem(LAYOUT_KEY, JSON.stringify({ version: 2, pages, theme: themeKey || undefined }));
+}
+
+/** The dashboard-wide chart theme key, or null when none was saved. */
+export function loadThemeKey() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(LAYOUT_KEY));
+    return parsed?.theme || null;
+  } catch { return null; }
 }

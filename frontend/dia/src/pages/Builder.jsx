@@ -8,12 +8,15 @@ import TemplateSelector from '../components/Sidebar/TemplateSelector';
 import DataConfigModal from '../components/Modals/DataConfigModal';
 import { RAW_DATA_KEY, refreshWidgetConfigs } from '../utils/aggregate';
 import { DEMO_MODE } from '../utils/demo';
-import { loadPages, savePages, createPage } from '../utils/layout';
+import { loadPages, savePages, createPage, loadThemeKey } from '../utils/layout';
+import { DEFAULT_THEME_KEY } from '../utils/themes';
+import { DiaMark } from '../components/Brand/Logo';
 
 export default function Builder() {
   const navigate = useNavigate();
 
   const [pages, setPages] = useState(() => loadPages() || [createPage('Page 1')]);
+  const [themeKey, setThemeKey] = useState(() => loadThemeKey() || DEFAULT_THEME_KEY);
   const [activePageId, setActivePageId] = useState(null);
 
   const activePage = pages.find(p => p.id === activePageId) || pages[0];
@@ -150,7 +153,7 @@ export default function Builder() {
   };
 
   const handleSave = () => {
-    savePages(pages);
+    savePages(pages, themeKey);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 2000);
   };
@@ -167,17 +170,7 @@ export default function Builder() {
       {/* Header */}
       <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0 shadow-sm z-20 relative">
         <div className="flex items-center space-x-3">
-          <svg className="w-7 h-7 drop-shadow-sm" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M6 4H16C22.6274 4 28 9.37258 28 16C28 22.6274 22.6274 28 16 28H6V4Z" fill="url(#builder-grad)"/>
-            <path d="M6 14H12C16.4183 14 20 17.5817 20 22C20 26.4183 16.4183 28 12 28H6V14Z" fill="white" fillOpacity="0.15"/>
-            <circle cx="15" cy="16" r="3.5" fill="white"/>
-            <defs>
-              <linearGradient id="builder-grad" x1="6" y1="4" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#4F46E5" />
-                <stop offset="1" stopColor="#7C3AED" />
-              </linearGradient>
-            </defs>
-          </svg>
+          <DiaMark size={30} />
           <h1 className="text-xl font-bold text-gray-800 tracking-tight">DIA <span className="font-medium text-gray-400">| Builder</span></h1>
           {DEMO_MODE && (
             <span className="ml-2 text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5" title="No login, no backend – everything runs in this browser">
@@ -354,6 +347,7 @@ export default function Builder() {
             setWidgets={setActiveWidgets}
             isReadonly={isViewerMode}
             onConfigureWidget={handleConfigureWidget}
+            themeKey={themeKey}
           />
         </main>
 
@@ -362,7 +356,7 @@ export default function Builder() {
           className={`bg-white border-l border-gray-200 flex flex-col z-10 shadow-[-4px_0_24px_rgba(0,0,0,0.02)] transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden ${isRightOpen ? 'w-80' : 'w-0 opacity-0'}`}
         >
           <div className="w-80 h-full">
-            <WidgetToolbox onAddWidget={handleAddWidget} onApplyTemplate={handleApplyTemplate} />
+            <WidgetToolbox onAddWidget={handleAddWidget} onApplyTemplate={handleApplyTemplate} currentTheme={themeKey} onSelectTheme={setThemeKey} />
           </div>
         </aside>
 

@@ -7,6 +7,26 @@ const TABLE_ROW_CAP = 500;
 
 const isBlank = (value) => value === undefined || value === null || String(value).trim() === '';
 
+// Month names (English and German, full and abbreviated) -> calendar index.
+const MONTHS = {
+  jan: 0, january: 0, januar: 0,
+  feb: 1, february: 1, februar: 1,
+  mar: 2, march: 2, 'mär': 2, mrz: 2, maerz: 2, 'märz': 2,
+  apr: 3, april: 3,
+  may: 4, mai: 4,
+  jun: 5, june: 5, juni: 5,
+  jul: 6, july: 6, juli: 6,
+  aug: 7, august: 7,
+  sep: 8, sept: 8, september: 8,
+  oct: 9, october: 9, okt: 9, oktober: 9,
+  nov: 10, november: 10,
+  dec: 11, december: 11, dez: 11, dezember: 11
+};
+const monthIndexOf = (label) => {
+  const key = String(label).trim().toLowerCase().replace(/\.$/, '');
+  return key in MONTHS ? MONTHS[key] : -1;
+};
+
 const toNumber = (value) => {
   const parsed = parseFloat(String(value).replace(/[^0-9.-]+/g, ''));
   return isNaN(parsed) ? 0 : parsed;
@@ -35,6 +55,66 @@ function buildTable(sheet, selectedColumns) {
     selectedColumns.forEach((col, i) => { obj[col] = row[indices[i]]; });
     return obj;
   });
+}
+
+// Pivot-style tree: rows grouped by each hierarchy column in turn, with a row
+// count and (optionally) the sum of a value column per group.
+function buildTableTree(sheet, { hierarchy, measure }) {
+  const levelIdxs = hierarchy.map((c) => columnIndex(sheet, c));
+  const measureIdx = measure ? columnIndex(sheet, measure) : -1;
+  // The first level often holds a near-unique key (order no., requisition no.) with
+  // thousands of groups — searching only works on groups that are actually in the
+  // tree, so keep the caps generous and report when they truncate.
+  const LEVEL1_MAX = 5000;
+  const DEEP_MAX = 200;      // per parent, ranked by value
+  const TOTAL_BUDGET = 20000; // hard ceiling on stored nodes across the whole tree
+
+  const root = { children: new Map(), count: 0, sum: 0 };
+  sheet.data.forEach((row) => {
+    root.count += 1;
+    if (measureIdx >= 0) root.sum += toNumber(isBlank(row[measureIdx]) ? 0 : row[measureIdx]);
+    let node = root;
+    for (const idx of levelIdxs) {
+      const key = isBlank(row[idx]) ? 'Unknown' : String(row[idx]).trim();
+      if (!node.children.has(key)) node.children.set(key, { children: new Map(), count: 0, sum: 0 });
+      node = node.children.get(key);
+      node.count += 1;
+      if (measureIdx >= 0) node.sum += toNumber(isBlank(row[measureIdx]) ? 0 : row[measureIdx]);
+    }
+  });
+
+  const budget = { used: 0, deepTruncated: false };
+  const toArray = (map, depth) => {
+    const cap = depth === 0 ? LEVEL1_MAX : DEEP_MAX;
+    const entries = [...map.entries()]
+      .map(([label, n]) => ({ label, node: n }))
+      .sort((a, b) => (measureIdx >= 0 ? b.node.sum - a.node.sum : b.node.count - a.node.count));
+    if (entries.length > cap && depth > 0) budget.deepTruncated = true;
+    const out = [];
+    for (const { label, node } of entries.slice(0, cap)) {
+      if (budget.used >= TOTAL_BUDGET) { budget.deepTruncated = true; break; }
+      budget.used += 1;
+      out.push({
+        label,
+        count: node.count,
+        sum: measureIdx >= 0 ? node.sum : null,
+        children: toArray(node.children, depth + 1)
+      });
+    }
+    return out;
+  };
+
+  const level1Total = root.children.size;
+  const tree = toArray(root.children, 0);
+
+  return {
+    tree,
+    totalCount: root.count,
+    totalSum: measureIdx >= 0 ? root.sum : null,
+    level1Total,
+    level1Shown: tree.length,
+    deepTruncated: budget.deepTruncated
+  };
 }
 
 function buildMultiMeasure(sheet, { xAxis, selectedColumns, aggregation, isBubble }) {
@@ -102,6 +182,16 @@ function buildMultiMeasure(sheet, { xAxis, selectedColumns, aggregation, isBubbl
 
 function buildSingleValue(sheet, { yAxis, aggregation }) {
   const yIndex = columnIndex(sheet, yAxis);
+
+  // Distinct: how many different values the column holds (repeated suppliers count once).
+  if (aggregation === 'distinct') {
+    const seen = new Set();
+    sheet.data.forEach((row) => {
+      if (!isBlank(row[yIndex])) seen.add(String(row[yIndex]).trim());
+    });
+    return [{ label: 'Total', value: seen.size }];
+  }
+
   const stats = { sum: 0, count: 0, min: Infinity, max: -Infinity };
   sheet.data.forEach((row) => {
     if (isBlank(row[yIndex])) return; // empty cells do not count
@@ -159,7 +249,10 @@ function buildGrouped(sheet, { xAxis, yAxis, aggregation, dataLimit, sortByLabel
     aggregated.push({ label: String(key), value });
   });
 
-  if (sortByLabel) aggregated.sort((a, b) => a.label.localeCompare(b.label));
+  // A month column sorts by calendar order, never alphabetically or by value.
+  const isMonthSeries = aggregated.length > 1 && aggregated.every((d) => monthIndexOf(d.label) !== -1);
+  if (isMonthSeries) aggregated.sort((a, b) => monthIndexOf(a.label) - monthIndexOf(b.label));
+  else if (sortByLabel) aggregated.sort((a, b) => a.label.localeCompare(b.label));
   else aggregated.sort((a, b) => b.value - a.value);
 
   if (dataLimit === 'top_20') return aggregated.slice(0, 20);
@@ -203,11 +296,16 @@ export function buildWidgetConfig(widgetType, form, rawSheets) {
 
   let aggregated = [];
   let tableData = null;
+  let tableTree = null;
   let radarData = null;
   let bubbleData = null;
 
   if (isTable) {
-    tableData = buildTable(sheet, selectedColumns);
+    if (form.tableMode === 'tree') {
+      tableTree = buildTableTree(sheet, { hierarchy: selectedColumns, measure: form.tableMeasure || null });
+    } else {
+      tableData = buildTable(sheet, selectedColumns);
+    }
   } else if (isMultiMeasure) {
     ({ radarData, bubbleData } = buildMultiMeasure(sheet, {
       xAxis: form.xAxis, selectedColumns, aggregation, isBubble: widgetType === 'bubble'
@@ -222,7 +320,9 @@ export function buildWidgetConfig(widgetType, form, rawSheets) {
     });
   }
 
-  const defaultTitle = isTable || isMultiMeasure
+  const defaultTitle = isTable && form.tableMode === 'tree'
+    ? selectedColumns.join(' › ')
+    : isTable || isMultiMeasure
     ? `Data from ${form.sheetName}`
     : `${aggregation.toUpperCase()} of ${form.yAxis}${isSingleValue || isSegmentation ? '' : ` by ${form.xAxis}`}`;
 
@@ -238,7 +338,11 @@ export function buildWidgetConfig(widgetType, form, rawSheets) {
     bubbleData: widgetType === 'bubble' ? bubbleData : null,
     aggregatedData: isFunnel ? aggregated : null,
     tableData: isTable ? tableData : null,
+    tableTree: isTable ? tableTree : null,
+    tableMode: isTable ? (form.tableMode || 'flat') : null,
+    tableMeasure: isTable ? (form.tableMeasure || null) : null,
     selectedColumns: isTable || isMultiMeasure ? selectedColumns : null,
+    currency: isSingleValue ? (form.currency || '') : null,
     customTitle,
     title: customTitle || defaultTitle
   };
@@ -263,6 +367,9 @@ export function refreshWidgetConfigs(widgets, rawSheets) {
         aggregation: config.aggregation,
         dataLimit: config.dataLimit,
         selectedColumns: config.selectedColumns,
+        tableMode: config.tableMode,
+        tableMeasure: config.tableMeasure,
+        currency: config.currency,
         customTitle: config.customTitle
       }, rawSheets);
       refreshed++;

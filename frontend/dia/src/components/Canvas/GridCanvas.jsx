@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { GridStack } from 'gridstack';
 import ChartWidget from '../Charts/ChartWidget';
 
-export default function GridCanvas({ widgets, setWidgets, isReadonly = false, onConfigureWidget }) {
+export default function GridCanvas({ widgets, setWidgets, isReadonly = false, onConfigureWidget, themeKey }) {
   const gridRef = useRef(null);
   const gridInstance = useRef(null);
 
@@ -145,6 +145,22 @@ export default function GridCanvas({ widgets, setWidgets, isReadonly = false, on
     }
   };
 
+  // Clone a widget with its full configuration; the engine auto-places the copy.
+  const duplicateWidget = (id) => {
+    setWidgets(prev => {
+      const source = prev.find(w => w.id === id);
+      if (!source) return prev;
+      const copy = {
+        ...source,
+        id: `widget-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        x: undefined,
+        y: undefined,
+        config: source.config ? JSON.parse(JSON.stringify(source.config)) : null
+      };
+      return [...prev, copy];
+    });
+  };
+
   const handleConfigure = (id) => {
     if (onConfigureWidget) {
       onConfigureWidget(id);
@@ -170,7 +186,9 @@ export default function GridCanvas({ widgets, setWidgets, isReadonly = false, on
                 widget={widget}
                 onRemove={removeWidget}
                 onConfigure={handleConfigure}
+                onDuplicate={duplicateWidget}
                 isReadonly={isReadonly}
+                themeKey={themeKey}
               />
             </div>
           </div>

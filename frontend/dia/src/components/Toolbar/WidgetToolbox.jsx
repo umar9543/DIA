@@ -14,6 +14,7 @@ import {
   Legend
 } from 'chart.js';
 import { Bar, Line, Pie, Doughnut } from 'react-chartjs-2';
+import { CHART_THEMES } from '../../utils/themes';
 
 ChartJS.register(
   CategoryScale,
@@ -116,19 +117,19 @@ const Previews = {
   )
 };
 
-export default function WidgetToolbox({ onAddWidget }) {
+export default function WidgetToolbox({ onAddWidget, currentTheme, onSelectTheme }) {
   useEffect(() => {
     // Make these items draggable into GridStack
-    GridStack.setupDragIn('.new-widget', { 
-      revert: 'invalid', 
-      scroll: false, 
-      appendTo: 'body', 
-      helper: 'clone' 
+    GridStack.setupDragIn('.new-widget', {
+      revert: 'invalid',
+      scroll: false,
+      appendTo: 'body',
+      helper: 'clone'
     });
   }, []);
 
   const chartTypes = [
-    { type: 'kpi', label: 'KPI Card', w: 2, h: 2 },
+    { type: 'kpi', label: 'KPI Card', w: 3, h: 2 }, // 12-col grid -> exactly 4 per row
     { type: 'table', label: 'Data Table', w: 6, h: 4 },
     { type: 'bar', label: 'Bar Chart', w: 4, h: 3 },
     { type: 'line', label: 'Line Chart', w: 6, h: 3 },
@@ -152,7 +153,7 @@ export default function WidgetToolbox({ onAddWidget }) {
         </div>
         <div className="p-4 pt-3 grid grid-cols-2 gap-3">
           {chartTypes.map((item) => (
-            <div 
+            <div
               key={item.type}
               className="new-widget grid-stack-item bg-white hover:bg-white border border-gray-200 hover:border-indigo-400 rounded-xl p-3 cursor-grab active:cursor-grabbing transition-all shadow-sm hover:shadow-md flex flex-col items-center justify-center text-center group"
               data-type={item.type}
@@ -167,6 +168,33 @@ export default function WidgetToolbox({ onAddWidget }) {
                 <span className="text-xs font-bold text-gray-700">{item.label}</span>
               </div>
             </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Theme Palette */}
+      <div className="flex flex-col">
+        <div className="p-4 pb-2 bg-gray-50/50">
+          <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Theme Palette</h2>
+          <p className="text-xs text-gray-500 mt-1">One theme recolors every chart</p>
+        </div>
+        <div className="p-4 pt-3 space-y-2">
+          {Object.entries(CHART_THEMES).map(([key, t]) => (
+            <button
+              key={key}
+              onClick={() => onSelectTheme?.(key)}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all ${currentTheme === key ? 'border-indigo-400 ring-1 ring-indigo-200 bg-indigo-50/60' : 'border-gray-200 bg-white hover:border-indigo-300'}`}
+            >
+              <span className="text-xs font-bold text-gray-700 flex items-center">
+                {currentTheme === key && <i className="fa-solid fa-check text-indigo-500 mr-1.5 text-[10px]"></i>}
+                {t.name}
+              </span>
+              <span className="flex space-x-1">
+                {t.colors.slice(0, 5).map((c) => (
+                  <span key={c} className="w-3.5 h-3.5 rounded-full border border-black/10" style={{ backgroundColor: c }}></span>
+                ))}
+              </span>
+            </button>
           ))}
         </div>
       </div>

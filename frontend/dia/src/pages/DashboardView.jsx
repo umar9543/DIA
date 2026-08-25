@@ -5,8 +5,9 @@ import 'gridstack/dist/gridstack.min.css';
 import html2canvas from 'html2canvas-pro';
 import pptxgen from 'pptxgenjs';
 import ChartWidget from '../components/Charts/ChartWidget';
-import { loadPages } from '../utils/layout';
+import { loadPages, loadThemeKey } from '../utils/layout';
 import { buildDashboardHtml } from '../utils/htmlExport';
+import { DiaMark } from '../components/Brand/Logo';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -15,6 +16,7 @@ export default function DashboardView() {
   const gridRef = useRef(null);
 
   const [pages] = useState(() => loadPages() || []);
+  const [themeKey] = useState(() => loadThemeKey());
   const [activePageId, setActivePageId] = useState(() => (loadPages() || [])[0]?.id ?? null);
   const [exporting, setExporting] = useState(null); // 'ppt' | 'html' | null
 
@@ -78,6 +80,8 @@ export default function DashboardView() {
             doc.head.appendChild(style);
           }
           doc.querySelectorAll('*').forEach(node => { node.style.boxShadow = 'none'; });
+          // Interactive-only controls (e.g. table search) have no place in a static snapshot.
+          doc.querySelectorAll('[data-export-hide]').forEach(node => { node.style.display = 'none'; });
           const clonedGrid = doc.querySelector('main .grid-stack');
           if (clonedGrid) {
             clonedGrid.style.width = `${gridEl.offsetWidth}px`;
@@ -174,8 +178,9 @@ export default function DashboardView() {
   const handleExportHTML = async () => {
     try {
       setExporting('html');
-      const captured = await capturePages();
-      const html = buildDashboardHtml(captured, { title: 'DIA Dashboard' });
+      // Interactive export: rebuilt from widget configs (aggregates + table data),
+      // not from screenshots — charts, search and drill-down stay usable in the file.
+      const html = buildDashboardHtml(pages, { title: 'DIA Dashboard', themeKey });
 
       const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
       const link = document.createElement('a');
@@ -198,17 +203,7 @@ export default function DashboardView() {
       {/* Client Facing Header */}
       <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm z-10 shrink-0">
         <div className="flex items-center space-x-3">
-          <svg className="w-7 h-7 drop-shadow-sm" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M6 4H16C22.6274 4 28 9.37258 28 16C28 22.6274 22.6274 28 16 28H6V4Z" fill="url(#viewer-grad)"/>
-            <path d="M6 14H12C16.4183 14 20 17.5817 20 22C20 26.4183 16.4183 28 12 28H6V14Z" fill="white" fillOpacity="0.15"/>
-            <circle cx="15" cy="16" r="3.5" fill="white"/>
-            <defs>
-              <linearGradient id="viewer-grad" x1="6" y1="4" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#4F46E5" />
-                <stop offset="1" stopColor="#7C3AED" />
-              </linearGradient>
-            </defs>
-          </svg>
+          <DiaMark size={30} />
           <h1 className="text-xl font-bold text-gray-800 tracking-tight">Client Dashboard View</h1>
         </div>
 
@@ -252,20 +247,10 @@ export default function DashboardView() {
         {pages.length > 0 && (
           <aside className="w-64 bg-white text-slate-600 flex flex-col shrink-0 overflow-y-auto border-r border-slate-200">
             <div className="flex items-center space-x-3 px-5 pt-6 pb-5">
-              <svg className="w-8 h-8 drop-shadow-sm shrink-0" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M6 4H16C22.6274 4 28 9.37258 28 16C28 22.6274 22.6274 28 16 28H6V4Z" fill="url(#side-grad)"/>
-                <path d="M6 14H12C16.4183 14 20 17.5817 20 22C20 26.4183 16.4183 28 12 28H6V14Z" fill="white" fillOpacity="0.15"/>
-                <circle cx="15" cy="16" r="3.5" fill="white"/>
-                <defs>
-                  <linearGradient id="side-grad" x1="6" y1="4" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#6366F1" />
-                    <stop offset="1" stopColor="#8B5CF6" />
-                  </linearGradient>
-                </defs>
-              </svg>
+              <DiaMark size={36} />
               <div>
-                <div className="text-slate-900 font-extrabold text-[17px] leading-tight tracking-tight">DIA</div>
-                <div className="text-[11px] text-slate-400 font-semibold">Analytics Dashboard</div>
+                <div className="text-[17px] leading-tight" style={{ color: '#274F91', fontFamily: "'Space Grotesk', 'DM Sans', sans-serif", fontWeight: 700 }}>DIA</div>
+                <div className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: '#274F91' }}>Data into Action</div>
               </div>
             </div>
 
@@ -338,6 +323,7 @@ export default function DashboardView() {
                       <ChartWidget
                         widget={widget}
                         isReadonly={true}
+                        themeKey={themeKey}
                       />
                     </div>
                   </div>
