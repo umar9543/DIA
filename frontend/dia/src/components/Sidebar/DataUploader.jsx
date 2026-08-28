@@ -215,7 +215,7 @@ export default function DataUploader({ onDataLoaded, onDataRemoved, loadedDataSh
                     >
                       <div className="min-w-0">
                         <h3 className="text-sm font-bold text-slate-700 flex items-center truncate">
-                          <i className="fa-regular fa-folder-open text-indigo-500 mr-2"></i>
+                          <i className="fa-regular fa-folder-open text-brand-500 mr-2"></i>
                           {sheet.sheetName}
                         </h3>
                         <p className="text-xs text-slate-500 ml-6">{sheet.headers.length} columns · {sheet.data?.length ?? 0} rows</p>
@@ -226,8 +226,8 @@ export default function DataUploader({ onDataLoaded, onDataRemoved, loadedDataSh
                     {expandedSheet === sheet.sheetName && (
                       <div className="p-2 overflow-y-auto max-h-60 space-y-1">
                         {sheet.headers.map((col, colIdx) => (
-                          <div key={colIdx} className="flex items-center p-2 rounded-lg hover:bg-indigo-50/50 border border-transparent hover:border-indigo-100 transition-colors group">
-                            <div className="w-6 h-6 rounded flex items-center justify-center mr-3 text-xs bg-indigo-50 text-indigo-600">
+                          <div key={colIdx} className="flex items-center p-2 rounded-lg hover:bg-brand-50/50 border border-transparent hover:border-brand-100 transition-colors group">
+                            <div className="w-6 h-6 rounded flex items-center justify-center mr-3 text-xs bg-brand-50 text-brand-600">
                               <i className="fa-solid fa-hashtag"></i>
                             </div>
                             <span className="text-sm font-semibold text-slate-700 truncate">{col}</span>
@@ -255,7 +255,7 @@ export default function DataUploader({ onDataLoaded, onDataRemoved, loadedDataSh
       )}
       <div
         className={`relative flex flex-col items-center justify-center px-4 py-8 mx-2 border-2 border-dashed rounded-2xl transition-all duration-300 text-center whitespace-normal
-          ${isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300 bg-transparent hover:bg-slate-50/50 hover:border-slate-400'}
+          ${isDragging ? 'border-brand-500 bg-brand-50' : 'border-slate-300 bg-transparent hover:bg-slate-50/50 hover:border-slate-400'}
           ${isUploading ? 'opacity-50 pointer-events-none' : ''}
         `}
         onDragOver={handleDragOver}
@@ -265,12 +265,12 @@ export default function DataUploader({ onDataLoaded, onDataRemoved, loadedDataSh
       >
         {isUploading ? (
           <div className="flex flex-col items-center space-y-4">
-            <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+            <div className="w-12 h-12 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin"></div>
             <p className="text-sm font-bold text-[#1e293b]">Parsing data locally...</p>
           </div>
         ) : (
           <>
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-transform duration-300 ${isDragging ? 'bg-indigo-600 scale-110 text-white shadow-lg shadow-indigo-500/30' : 'bg-white shadow-sm text-[#6366f1]'}`}>
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-transform duration-300 ${isDragging ? 'bg-brand-600 scale-110 text-white shadow-lg shadow-brand-500/30' : 'bg-white shadow-sm text-[#274F91]'}`}>
               <i className="fa-solid fa-cloud-arrow-up text-2xl"></i>
             </div>
             <h3 className="text-base font-bold text-[#1e293b] mb-1">Load Data</h3>

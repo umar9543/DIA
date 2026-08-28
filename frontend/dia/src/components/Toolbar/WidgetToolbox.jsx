@@ -39,12 +39,12 @@ const previewOptions = {
 
 const dummyDataBar = {
   labels: ['1', '2', '3'],
-  datasets: [{ data: [3, 7, 5], backgroundColor: ['#60a5fa', '#6366f1', '#c084fc'], borderRadius: 2 }]
+  datasets: [{ data: [3, 7, 5], backgroundColor: ['#60a5fa', '#274F91', '#c084fc'], borderRadius: 2 }]
 };
 
 const dummyDataLine = {
   labels: ['1', '2', '3', '4'],
-  datasets: [{ data: [2, 5, 3, 6], borderColor: '#6366f1', borderWidth: 3, pointRadius: 0, tension: 0.4 }]
+  datasets: [{ data: [2, 5, 3, 6], borderColor: '#274F91', borderWidth: 3, pointRadius: 0, tension: 0.4 }]
 };
 
 const dummyDataPie = {
@@ -55,16 +55,16 @@ const dummyDataPie = {
 const Previews = {
   kpi: () => (
     <div className="flex flex-col items-center justify-center w-full h-full bg-gray-50/50 rounded-lg">
-      <span className="text-2xl font-black text-indigo-600">84%</span>
+      <span className="text-2xl font-black text-brand-600">84%</span>
       <span className="text-[9px] text-gray-400 mt-0.5 uppercase tracking-wider font-semibold">Growth</span>
     </div>
   ),
   table: () => (
     <div className="flex flex-col w-full h-full bg-gray-50/50 rounded-lg p-2 space-y-1 justify-center">
       <div className="w-full h-2 bg-gray-300 rounded-[2px]"></div>
-      <div className="w-full h-2 bg-indigo-200 rounded-[2px]"></div>
+      <div className="w-full h-2 bg-brand-200 rounded-[2px]"></div>
       <div className="w-full h-2 bg-gray-200 rounded-[2px]"></div>
-      <div className="w-full h-2 bg-indigo-100 rounded-[2px]"></div>
+      <div className="w-full h-2 bg-brand-100 rounded-[2px]"></div>
     </div>
   ),
   bar: () => (
@@ -95,24 +95,24 @@ const Previews = {
   ),
   funnel: () => (
     <div className="flex flex-col items-center justify-center w-full h-full bg-gray-50/50 rounded-lg p-2 space-y-[2px]">
-      <div className="w-full h-1.5 bg-indigo-400 rounded-sm"></div>
-      <div className="w-4/5 h-1.5 bg-indigo-300 rounded-sm"></div>
-      <div className="w-3/5 h-1.5 bg-indigo-200 rounded-sm"></div>
+      <div className="w-full h-1.5 bg-brand-400 rounded-sm"></div>
+      <div className="w-4/5 h-1.5 bg-brand-300 rounded-sm"></div>
+      <div className="w-3/5 h-1.5 bg-brand-200 rounded-sm"></div>
       <div className="w-2/5 h-1.5 bg-emerald-300 rounded-sm"></div>
     </div>
   ),
   radar: () => (
     <div className="flex items-center justify-center w-full h-full bg-gray-50/50 rounded-lg p-2">
-      <div className="w-6 h-6 border-2 border-indigo-200 rounded-full flex items-center justify-center rotate-45">
-        <div className="w-3 h-3 bg-indigo-400/50 rounded-full"></div>
+      <div className="w-6 h-6 border-2 border-brand-200 rounded-full flex items-center justify-center rotate-45">
+        <div className="w-3 h-3 bg-brand-400/50 rounded-full"></div>
       </div>
     </div>
   ),
   bubble: () => (
     <div className="flex items-center w-full h-full bg-gray-50/50 rounded-lg p-2 relative">
       <div className="absolute left-2 bottom-2 w-3 h-3 rounded-full bg-blue-400/60 border border-blue-500"></div>
-      <div className="absolute right-3 top-2 w-4 h-4 rounded-full bg-indigo-400/60 border border-indigo-500"></div>
-      <div className="absolute left-5 top-4 w-2 h-2 rounded-full bg-purple-400/60 border border-purple-500"></div>
+      <div className="absolute right-3 top-2 w-4 h-4 rounded-full bg-brand-400/60 border border-brand-500"></div>
+      <div className="absolute left-5 top-4 w-2 h-2 rounded-full bg-brand-400/60 border border-brand-500"></div>
     </div>
   )
 };
@@ -155,7 +155,7 @@ export default function WidgetToolbox({ onAddWidget, currentTheme, onSelectTheme
           {chartTypes.map((item) => (
             <div
               key={item.type}
-              className="new-widget grid-stack-item bg-white hover:bg-white border border-gray-200 hover:border-indigo-400 rounded-xl p-3 cursor-grab active:cursor-grabbing transition-all shadow-sm hover:shadow-md flex flex-col items-center justify-center text-center group"
+              className="new-widget grid-stack-item bg-white hover:bg-white border border-gray-200 hover:border-brand-400 rounded-xl p-3 cursor-grab active:cursor-grabbing transition-all shadow-sm hover:shadow-md flex flex-col items-center justify-center text-center group"
               data-type={item.type}
               gs-w={item.w}
               gs-h={item.h}
@@ -183,10 +183,10 @@ export default function WidgetToolbox({ onAddWidget, currentTheme, onSelectTheme
             <button
               key={key}
               onClick={() => onSelectTheme?.(key)}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all ${currentTheme === key ? 'border-indigo-400 ring-1 ring-indigo-200 bg-indigo-50/60' : 'border-gray-200 bg-white hover:border-indigo-300'}`}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all ${currentTheme === key ? 'border-brand-400 ring-1 ring-brand-200 bg-brand-50/60' : 'border-gray-200 bg-white hover:border-brand-300'}`}
             >
               <span className="text-xs font-bold text-gray-700 flex items-center">
-                {currentTheme === key && <i className="fa-solid fa-check text-indigo-500 mr-1.5 text-[10px]"></i>}
+                {currentTheme === key && <i className="fa-solid fa-check text-brand-500 mr-1.5 text-[10px]"></i>}
                 {t.name}
               </span>
               <span className="flex space-x-1">

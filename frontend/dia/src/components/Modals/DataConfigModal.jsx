@@ -19,7 +19,7 @@ const CustomSelect = ({ value, onChange, options, placeholder, disabled }) => {
   return (
     <div className={`relative ${disabled ? 'opacity-50 pointer-events-none' : ''}`} ref={selectRef}>
       <div
-        className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg p-2.5 font-medium flex justify-between items-center cursor-pointer hover:border-indigo-400 transition-colors h-[42px]"
+        className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg p-2.5 font-medium flex justify-between items-center cursor-pointer hover:border-brand-400 transition-colors h-[42px]"
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
         <span className={!value ? 'text-slate-400 truncate pr-2' : 'text-slate-700 truncate pr-2'}>
@@ -33,7 +33,7 @@ const CustomSelect = ({ value, onChange, options, placeholder, disabled }) => {
           {options.map((opt, i) => (
             <div
               key={i}
-              className={`px-3 py-2 text-sm cursor-pointer transition-colors ${value === opt.value ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-700 hover:bg-slate-50'}`}
+              className={`px-3 py-2 text-sm cursor-pointer transition-colors ${value === opt.value ? 'bg-brand-50 text-brand-700 font-bold' : 'text-slate-700 hover:bg-slate-50'}`}
               onClick={() => {
                 onChange(opt.value);
                 setIsOpen(false);
@@ -58,7 +58,7 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
   const [customTitle, setCustomTitle] = useState('');
   const [currency, setCurrency] = useState('');
   const [tableMode, setTableMode] = useState('flat');
-  const [tableMeasure, setTableMeasure] = useState('');
+  const [tableMeasures, setTableMeasures] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
 
@@ -76,7 +76,7 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
         setCustomTitle(widget.config.customTitle || '');
         setCurrency(widget.config.currency || '');
         setTableMode(widget.config.tableMode || 'flat');
-        setTableMeasure(widget.config.tableMeasure || '');
+        setTableMeasures(widget.config.tableMeasures || (widget.config.tableMeasure ? [widget.config.tableMeasure] : []));
       } else {
         // Reset defaults
         if (loadedDataSheets && loadedDataSheets.length > 0) {
@@ -90,7 +90,7 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
         setCustomTitle('');
         setCurrency('');
         setTableMode('flat');
-        setTableMeasure('');
+        setTableMeasures([]);
       }
       setError(null);
     }
@@ -150,7 +150,7 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
         dataLimit,
         selectedColumns,
         tableMode,
-        tableMeasure,
+        tableMeasures: tableMeasures.filter(c => !selectedColumns.includes(c)),
         currency,
         customTitle
       }, allRawData);
@@ -178,7 +178,7 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
 
         <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <h3 className="text-lg font-bold text-slate-800 flex items-center">
-            <i className="fa-solid fa-chart-pie text-indigo-500 mr-2"></i>
+            <i className="fa-solid fa-chart-pie text-brand-500 mr-2"></i>
             Configure Chart Data
           </h3>
           <button
@@ -224,7 +224,7 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
                       <button
                         key={opt.v}
                         onClick={() => setTableMode(opt.v)}
-                        className={`py-2 px-3 text-xs font-bold rounded-lg border transition-all ${tableMode === opt.v ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                        className={`py-2 px-3 text-xs font-bold rounded-lg border transition-all ${tableMode === opt.v ? 'bg-brand-50 border-brand-200 text-brand-700 shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                       >
                         {opt.l}
                       </button>
@@ -252,11 +252,11 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
                                 setSelectedColumns(selectedColumns.filter(c => c !== col));
                               }
                             }}
-                            className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer"
+                            className="w-4 h-4 text-brand-600 border-slate-300 rounded focus:ring-brand-500 cursor-pointer"
                           />
-                          <span className="text-sm font-medium text-slate-700 group-hover:text-indigo-600 transition-colors flex-1">{col}</span>
+                          <span className="text-sm font-medium text-slate-700 group-hover:text-brand-600 transition-colors flex-1">{col}</span>
                           {tableMode === 'tree' && order !== -1 && (
-                            <span className="w-5 h-5 rounded-md bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0">{order + 1}</span>
+                            <span className="w-5 h-5 rounded-md bg-brand-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0">{order + 1}</span>
                           )}
                         </label>
                       );
@@ -266,15 +266,34 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
                   {tableMode === 'tree' && (
                     <div className="mt-4">
                       <label className="block text-sm font-bold text-slate-700 mb-1.5">
-                        Value column <span className="text-xs font-normal text-slate-400">(Optional, summed per group)</span>
+                        Value columns <span className="text-xs font-normal text-slate-400">(Optional, each summed per group)</span>
                       </label>
-                      <CustomSelect
-                        value={tableMeasure}
-                        onChange={(val) => setTableMeasure(val === '— none —' ? '' : val)}
-                        placeholder="Row count only"
-                        disabled={!selectedSheet}
-                        options={['— none —', ...columns.filter(c => !selectedColumns.includes(c))].map(col => ({ value: col, label: col }))}
-                      />
+                      <p className="text-[11px] text-slate-400 font-medium mb-1.5">Tick one or more numeric columns — each becomes its own total column. None ticked = row count only.</p>
+                      <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 max-h-40 overflow-y-auto space-y-2">
+                        {columns.filter(c => !selectedColumns.includes(c)).map(col => {
+                          const order = tableMeasures.indexOf(col);
+                          return (
+                            <label key={col} className="flex items-center space-x-3 cursor-pointer group">
+                              <input
+                                type="checkbox"
+                                checked={order !== -1}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setTableMeasures([...tableMeasures, col]);
+                                  } else {
+                                    setTableMeasures(tableMeasures.filter(c => c !== col));
+                                  }
+                                }}
+                                className="w-4 h-4 text-brand-600 border-slate-300 rounded focus:ring-brand-500 cursor-pointer"
+                              />
+                              <span className="text-sm font-medium text-slate-700 group-hover:text-brand-600 transition-colors flex-1">{col}</span>
+                              {order !== -1 && (
+                                <span className="w-5 h-5 rounded-md bg-brand-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0">{order + 1}</span>
+                              )}
+                            </label>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -287,7 +306,7 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
                     value={customTitle}
                     onChange={(e) => setCustomTitle(e.target.value)}
                     placeholder="e.g. Total Suppliers"
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 font-medium placeholder:text-slate-400"
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block p-2.5 font-medium placeholder:text-slate-400"
                   />
                 </div>
                 </>
@@ -338,7 +357,7 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
                           <label key={col} className="flex items-center p-2 hover:bg-white rounded cursor-pointer transition-colors">
                             <input
                               type="checkbox"
-                              className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500"
+                              className="w-4 h-4 text-brand-600 bg-gray-100 border-gray-300 rounded focus:ring-brand-500"
                               checked={selectedColumns.includes(col)}
                               onChange={(e) => {
                                 if (e.target.checked) setSelectedColumns(prev => [...prev, col]);
@@ -360,7 +379,7 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
                         <button
                           key={opt.v || 'none'}
                           onClick={() => setCurrency(opt.v)}
-                          className={`py-2 px-3 text-xs font-bold rounded-lg border transition-all ${currency === opt.v ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                          className={`py-2 px-3 text-xs font-bold rounded-lg border transition-all ${currency === opt.v ? 'bg-brand-50 border-brand-200 text-brand-700 shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                         >
                           {opt.l}
                         </button>
@@ -377,7 +396,7 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
                       value={customTitle}
                       onChange={(e) => setCustomTitle(e.target.value)}
                       placeholder="e.g. Total Suppliers"
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 font-medium placeholder:text-slate-400"
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block p-2.5 font-medium placeholder:text-slate-400"
                     />
                   </div>
 
@@ -397,7 +416,7 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
                           onClick={() => setAggregation(agg)}
                           className={`py-2 px-3 text-xs font-bold rounded-lg border transition-all ${
                             aggregation === agg
-                              ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm'
+                              ? 'bg-brand-50 border-brand-200 text-brand-700 shadow-sm'
                               : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                           }`}
                         >
@@ -415,7 +434,7 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
                       <select
                         value={dataLimit}
                         onChange={(e) => setDataLimit(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 font-medium"
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block p-2.5 font-medium"
                       >
                         <option value="top_20">Top 20 Items</option>
                         <option value="top_80_percent">Top 80% Cumulative Value (Pareto)</option>
@@ -447,7 +466,7 @@ export default function DataConfigModal({ isOpen, onClose, widgetId, widgets, se
               (!isTable && !isMultiMeasure && ((!isSingleValue && aggregation !== 'segmentation' && !xAxis) || !yAxis)) ||
               isProcessing
             }
-            className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-md shadow-indigo-200 transition-all disabled:opacity-50 disabled:hover:bg-indigo-600 flex items-center"
+            className="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-xl shadow-md shadow-brand-200 transition-all disabled:opacity-50 disabled:hover:bg-brand-600 flex items-center"
           >
             {isProcessing ? (
               <><i className="fa-solid fa-circle-notch fa-spin mr-2"></i> Processing...</>

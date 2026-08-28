@@ -223,18 +223,23 @@ const RUNTIME_JS = String.raw`
 
   function renderTreeTable(card, cfg) {
     var t = cfg.tableTree;
-    var hasSum = t.totalSum !== null && t.totalSum !== undefined;
+    // Old exports/config: one tableMeasure and per-node sum. New: tableMeasures[] and sums[].
+    var measures = cfg.tableMeasures || (cfg.tableMeasure ? [cfg.tableMeasure] : []);
+    var totals = t.totalSums || (t.totalSum !== null && t.totalSum !== undefined ? [t.totalSum] : []);
+    var sumsOf = function (n) { return n.sums || (n.sum !== null && n.sum !== undefined ? [n.sum] : []); };
+    var nM = measures.length;
     var open = {};
     var query = '';
     var body = el('div', 'tbl-scroll');
     var foot = el('div', 'tbl-foot');
+    foot.style.gridTemplateColumns = '1fr auto' + new Array(nM + 1).join(' auto');
 
     function filterNodes(nodes, q) {
       var out = [];
       nodes.forEach(function (n) {
         var self = String(n.label).toLowerCase().indexOf(q) !== -1;
         var kids = filterNodes(n.children, q);
-        if (self || kids.length) out.push({ label: n.label, count: n.count, sum: n.sum, children: self ? n.children : kids });
+        if (self || kids.length) out.push({ label: n.label, count: n.count, sum: n.sum, sums: n.sums, children: self ? n.children : kids });
       });
       return out;
     }
@@ -242,22 +247,25 @@ const RUNTIME_JS = String.raw`
     function render() {
       var q = query.trim().toLowerCase();
       var tree = q ? filterNodes(t.tree, q) : t.tree;
-      var html = '<table><thead><tr><th>Group</th><th class="num">Rows</th>' + (hasSum ? '<th class="num">Sum of ' + esc(cfg.tableMeasure) + '</th>' : '') + '</tr></thead><tbody>';
+      var html = '<table><thead><tr><th>Group</th><th class="num">Rows</th>' +
+        measures.map(function (m) { return '<th class="num">Sum of ' + esc(m) + '</th>'; }).join('') +
+        '</tr></thead><tbody>';
       var walk = function (nodes, depth, path) {
         nodes.forEach(function (n) {
           var key = path + '::' + n.label;
           var isOpen = q ? true : !!open[key];
           var kids = n.children.length > 0;
+          var ns = sumsOf(n);
           html += '<tr data-key="' + esc(key) + '" class="' + (kids ? 'grp' : '') + (depth === 0 ? ' top' : '') + '">' +
             '<td><span style="padding-left:' + depth * 18 + 'px" class="cell">' +
             (kids ? '<i class="chev' + (isOpen ? ' openc' : '') + '"></i>' : '<i class="chev-pad"></i>') +
             esc(n.label) + '</span></td>' +
             '<td class="num">' + fmt(n.count) + '</td>' +
-            (hasSum ? '<td class="num">' + fmt(n.sum) + '</td>' : '') + '</tr>';
+            measures.map(function (m, i) { return '<td class="num">' + fmt(ns[i] || 0) + '</td>'; }).join('') + '</tr>';
           if (isOpen && kids) walk(n.children, depth + 1, key);
         });
       };
-      if (q && tree.length === 0) html += '<tr><td colspan="' + (hasSum ? 3 : 2) + '" class="empty">No groups match</td></tr>';
+      if (q && tree.length === 0) html += '<tr><td colspan="' + (2 + nM) + '" class="empty">No groups match</td></tr>';
       walk(tree, 0, '');
       html += '</tbody></table>';
       body.innerHTML = html;
@@ -265,8 +273,11 @@ const RUNTIME_JS = String.raw`
         tr.addEventListener('click', function () { var k = tr.getAttribute('data-key'); open[k] = !open[k]; render(); });
       });
       var sc = q ? tree.reduce(function (a, n) { return a + n.count; }, 0) : t.totalCount;
-      var ss = q ? tree.reduce(function (a, n) { return a + (n.sum || 0); }, 0) : t.totalSum;
-      foot.innerHTML = '<span>' + (q ? 'Total (filtered)' : 'Total') + '</span><span class="num">' + fmt(sc) + '</span>' + (hasSum ? '<span class="num">' + fmt(ss) + '</span>' : '');
+      var ssArr = q
+        ? measures.map(function (m, i) { return tree.reduce(function (a, n) { return a + (sumsOf(n)[i] || 0); }, 0); })
+        : totals;
+      foot.innerHTML = '<span>' + (q ? 'Total (filtered)' : 'Total') + '</span><span class="num">' + fmt(sc) + '</span>' +
+        measures.map(function (m, i) { return '<span class="num">' + fmt(ssArr[i] || 0) + '</span>'; }).join('');
     }
     card.appendChild(searchBox(function (q) { query = q; render(); }));
     card.appendChild(body);
@@ -353,9 +364,9 @@ export function buildDashboardHtml(pages, { title = 'DIA Dashboard', themeKey } 
   nav { padding: 0 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; overflow-y: auto; }
   .nav { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 0; border-radius: 12px; cursor: pointer; background: none; color: #64748b; font: inherit; font-size: 14px; font-weight: 600; text-align: left; transition: all .15s ease; }
   .nav:hover { background: #f8fafc; color: #0f172a; }
-  .nav.active { background: #eef2ff; color: #4338ca; }
+  .nav.active { background: #EDF1F8; color: #1E3F74; }
   .chip { width: 24px; height: 24px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; background: #f1f5f9; color: #94a3b8; }
-  .nav.active .chip { background: #4f46e5; color: #fff; }
+  .nav.active .chip { background: #274F91; color: #fff; }
   .nav-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .side-foot { padding: 16px 20px 20px; border-top: 1px solid #f1f5f9; }
   .zdr { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; color: #64748b; }
@@ -383,7 +394,7 @@ export function buildDashboardHtml(pages, { title = 'DIA Dashboard', themeKey } 
 
   .tsearch { padding: 8px 8px 6px; flex-shrink: 0; position: relative; }
   .tsearch input { width: 100%; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 26px 6px 10px; font: inherit; font-size: 12px; color: #334155; }
-  .tsearch input:focus { outline: none; border-color: #818cf8; }
+  .tsearch input:focus { outline: none; border-color: #9AB3D8; }
   .tsearch button { position: absolute; right: 16px; top: 50%; transform: translateY(-40%); border: 0; background: none; color: #94a3b8; font-size: 14px; cursor: pointer; }
   .tbl-scroll { flex: 1; overflow: auto; min-height: 0; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; color: #6b7280; }
@@ -391,11 +402,11 @@ export function buildDashboardHtml(pages, { title = 'DIA Dashboard', themeKey } 
   th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
   tbody td { padding: 8px 14px; border-bottom: 1px solid #f3f4f6; color: #374151; font-weight: 500; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   tbody tr.grp { cursor: pointer; }
-  tbody tr.grp:hover { background: #eef2ff66; }
+  tbody tr.grp:hover { background: #edf1f866; }
   tbody tr.top { background: #f8fafc99; }
   tbody tr.top > td:first-child { font-weight: 600; color: #1f2937; }
   .cell { display: inline-flex; align-items: center; }
-  .chev { width: 0; height: 0; border-top: 4px solid transparent; border-bottom: 4px solid transparent; border-left: 5px solid #6366f1; margin-right: 8px; transition: transform .15s; }
+  .chev { width: 0; height: 0; border-top: 4px solid transparent; border-bottom: 4px solid transparent; border-left: 5px solid #274F91; margin-right: 8px; transition: transform .15s; }
   .chev.openc { transform: rotate(90deg); }
   .chev-pad { width: 13px; display: inline-block; }
   td.empty { text-align: center; color: #94a3b8; font-size: 12px; padding: 20px; }

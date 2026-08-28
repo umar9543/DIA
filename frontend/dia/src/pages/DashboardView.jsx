@@ -129,14 +129,14 @@ export default function DashboardView() {
       pres.layout = 'LAYOUT_16x9';
 
       const titleSlide = pres.addSlide();
-      titleSlide.background = { color: '4F46E5' };
+      titleSlide.background = { color: '274F91' };
       titleSlide.addText('Analytics Dashboard Report', {
         x: '10%', y: '40%', w: '80%', h: 1,
         fontSize: 44, color: 'FFFFFF', bold: true, align: 'center'
       });
       titleSlide.addText('Generated securely by DIA', {
         x: '10%', y: '55%', w: '80%', h: 1,
-        fontSize: 18, color: 'E0E7FF', align: 'center'
+        fontSize: 18, color: 'DBE4F1', align: 'center'
       });
 
       const MAX_W = 9.5;
@@ -235,7 +235,7 @@ export default function DashboardView() {
 
           <button
             onClick={() => navigate('/builder')}
-            className="text-indigo-600 hover:text-indigo-800 font-medium text-sm flex items-center transition-colors"
+            className="text-brand-600 hover:text-brand-800 font-medium text-sm flex items-center transition-colors"
           >
             <i className="fa-solid fa-arrow-left mr-2"></i> Back to Builder
           </button>
@@ -262,13 +262,13 @@ export default function DashboardView() {
                     onClick={() => setActivePageId(page.id)}
                     className={`group w-full flex items-center px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-left ${
                       isActive
-                        ? 'bg-indigo-50 text-indigo-700'
+                        ? 'bg-brand-50 text-brand-700'
                         : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                     }`}
                   >
                     <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-bold mr-3 shrink-0 transition-colors ${
                       isActive
-                        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
+                        ? 'bg-brand-600 text-white shadow-sm shadow-brand-200'
                         : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200 group-hover:text-slate-600'
                     }`}>
                       {idx + 1}
@@ -298,7 +298,7 @@ export default function DashboardView() {
                 <p>{pages.length === 0 ? 'No dashboard layout saved.' : `"${activePage?.name}" has no widgets yet.`}</p>
                 <button
                   onClick={() => navigate('/builder')}
-                  className="mt-4 text-indigo-600 hover:underline"
+                  className="mt-4 text-brand-600 hover:underline"
                 >
                   Go to Builder
                 </button>

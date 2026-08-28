@@ -45,13 +45,13 @@ export default function TemplateSelector({ onApplyTemplate }) {
         <button
           key={template.id}
           onClick={() => onApplyTemplate(template.layout)}
-          className="w-full flex items-center p-4 rounded-xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 transition-all text-left group shadow-sm hover:shadow bg-white"
+          className="w-full flex items-center p-4 rounded-xl border border-slate-200 hover:border-brand-300 hover:bg-brand-50/50 transition-all text-left group shadow-sm hover:shadow bg-white"
         >
-          <div className={`w-12 h-12 rounded-xl bg-${template.color}-100 flex items-center justify-center mr-4 shrink-0 group-hover:scale-110 transition-transform`}>
-            <i className={`fa-solid ${template.icon} text-${template.color}-600 text-xl`}></i>
+          <div className="w-12 h-12 rounded-xl bg-brand-50 flex items-center justify-center mr-4 shrink-0 group-hover:scale-110 transition-transform">
+            <i className={`fa-solid ${template.icon} text-brand-600 text-xl`}></i>
           </div>
           <div className="overflow-hidden flex-1">
-            <h4 className="text-sm font-bold text-slate-800 truncate group-hover:text-indigo-700 transition-colors">{template.title}</h4>
+            <h4 className="text-sm font-bold text-slate-800 truncate group-hover:text-brand-700 transition-colors">{template.title}</h4>
             <p className="text-xs text-slate-500 font-medium truncate mt-1">{template.description}</p>
           </div>
         </button>

@@ -1,5 +1,20 @@
 @import "tailwindcss";
 
+/* Brand blue scale derived from the DIA logo ink (#274F91). Gives the app
+   `brand-*` utilities (bg-brand-600, text-brand-700, ...) so every accent
+   matches the landing page instead of Tailwind's indigo. */
+@theme {
+  --color-brand-50: #EDF1F8;
+  --color-brand-100: #DBE4F1;
+  --color-brand-200: #C0D0E7;
+  --color-brand-300: #9AB3D8;
+  --color-brand-400: #6C8FC4;
+  --color-brand-500: #3F66A8;
+  --color-brand-600: #274F91;
+  --color-brand-700: #1E3F74;
+  --color-brand-800: #18325C;
+}
+
 @layer base {
   body {
     @apply bg-gray-50 text-gray-900;

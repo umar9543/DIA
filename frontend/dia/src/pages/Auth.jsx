@@ -54,8 +54,8 @@ function AuthForm() {
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden font-sans">
 
       {/* Background Meshes */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-200/50 rounded-full blur-[120px] pointer-events-none mix-blend-multiply"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-200/50 rounded-full blur-[100px] pointer-events-none mix-blend-multiply"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-brand-200/50 rounded-full blur-[120px] pointer-events-none mix-blend-multiply"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-brand-200/50 rounded-full blur-[100px] pointer-events-none mix-blend-multiply"></div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <Link to="/" className="flex items-center justify-center space-x-3 cursor-pointer mb-8 group transition-transform hover:scale-105">
@@ -68,7 +68,7 @@ function AuthForm() {
           Or{' '}
           <button
             onClick={() => setIsLogin(!isLogin)}
-            className="font-bold text-indigo-600 hover:text-indigo-500 transition-colors focus:outline-none"
+            className="font-bold text-brand-600 hover:text-brand-500 transition-colors focus:outline-none"
           >
             {isLogin ? 'start your 14-day free trial' : 'sign in to your existing account'}
           </button>
@@ -76,7 +76,7 @@ function AuthForm() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
-        <div className="bg-white/80 backdrop-blur-xl py-8 px-4 shadow-2xl shadow-indigo-500/10 sm:rounded-3xl sm:px-10 border border-white">
+        <div className="bg-white/80 backdrop-blur-xl py-8 px-4 shadow-2xl shadow-brand-500/10 sm:rounded-3xl sm:px-10 border border-white">
           <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
               <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-md">
@@ -102,7 +102,7 @@ function AuthForm() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg py-3 font-medium bg-gray-50 hover:bg-white transition-colors"
+                  className="focus:ring-brand-500 focus:border-brand-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg py-3 font-medium bg-gray-50 hover:bg-white transition-colors"
                   placeholder="you@example.com"
                 />
               </div>
@@ -119,7 +119,7 @@ function AuthForm() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg py-3 font-medium bg-gray-50 hover:bg-white transition-colors"
+                  className="focus:ring-brand-500 focus:border-brand-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg py-3 font-medium bg-gray-50 hover:bg-white transition-colors"
                   placeholder="••••••••"
                 />
               </div>
@@ -128,11 +128,11 @@ function AuthForm() {
             {isLogin && (
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <input id="remember-me" name="remember-me" type="checkbox" className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+                  <input id="remember-me" name="remember-me" type="checkbox" className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-gray-300 rounded" />
                   <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 font-medium">Remember me</label>
                 </div>
                 <div className="text-sm">
-                  <a href="#" className="font-bold text-indigo-600 hover:text-indigo-500">Forgot your password?</a>
+                  <a href="#" className="font-bold text-brand-600 hover:text-brand-500">Forgot your password?</a>
                 </div>
               </div>
             )}
@@ -141,7 +141,7 @@ function AuthForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-lg shadow-indigo-600/30 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all disabled:opacity-70 disabled:hover:translate-y-0"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-lg shadow-brand-600/30 text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-all disabled:opacity-70 disabled:hover:translate-y-0"
               >
                 {loading ? (
                   <span className="flex items-center"><i className="fa-solid fa-circle-notch fa-spin mr-2"></i> Processing...</span>

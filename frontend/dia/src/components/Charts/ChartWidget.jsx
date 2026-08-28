@@ -83,7 +83,7 @@ const TableSearch = ({ value, onChange }) => (
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search rows…"
-        className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-7 pr-7 py-1.5 text-xs font-medium text-slate-700 focus:outline-none focus:border-indigo-400 placeholder:text-slate-400"
+        className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-7 pr-7 py-1.5 text-xs font-medium text-slate-700 focus:outline-none focus:border-brand-400 placeholder:text-slate-400"
       />
       {value && (
         <button onClick={() => onChange('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" title="Clear search">
@@ -133,11 +133,14 @@ const FlatTable = ({ cols, rows }) => {
   );
 };
 
-// Expandable pivot table: indented rows, chevron per group, count + optional sum.
-const TreeTable = ({ tree, totalCount, totalSum, measureLabel, level1Shown, level1Total, deepTruncated }) => {
+// Expandable pivot table: indented rows, chevron per group, count + one column per measure.
+const TreeTable = ({ tree, totalCount, totalSums, measureLabels, level1Shown, level1Total, deepTruncated }) => {
   const [open, setOpen] = useState(() => new Set());
   const [query, setQuery] = useState('');
   const fmt = (v) => Number(v).toLocaleString(undefined, { maximumFractionDigits: 1 });
+  // Trees saved before multi-measure support store a single `sum` per node.
+  const sumsOf = (n) => n.sums || (n.sum != null ? [n.sum] : []);
+  const nMeasures = measureLabels.length;
 
   // Search keeps any branch containing a match (ancestors included); a matched
   // group keeps all its children so its breakdown stays intact.
@@ -153,7 +156,9 @@ const TreeTable = ({ tree, totalCount, totalSum, measureLabel, level1Shown, leve
   const visibleTree = q ? filterNodes(tree) : tree;
   // While searching, the footer totals the matching branches, not the whole dataset.
   const shownCount = q ? visibleTree.reduce((acc, n) => acc + n.count, 0) : totalCount;
-  const shownSum = q ? visibleTree.reduce((acc, n) => acc + (n.sum || 0), 0) : totalSum;
+  const shownSums = q
+    ? measureLabels.map((_, i) => visibleTree.reduce((acc, n) => acc + (sumsOf(n)[i] || 0), 0))
+    : (totalSums || []);
   const level1Hidden = level1Total > level1Shown ? level1Total - level1Shown : 0;
   const isTruncated = level1Hidden > 0 || deepTruncated;
 
@@ -191,12 +196,14 @@ const TreeTable = ({ tree, totalCount, totalSum, measureLabel, level1Shown, leve
           <tr>
             <th className="px-4 py-3 font-semibold">Group</th>
             <th className="px-4 py-3 font-semibold text-right w-24">Rows</th>
-            {measureLabel && <th className="px-4 py-3 font-semibold text-right whitespace-nowrap">{measureLabel}</th>}
+            {measureLabels.map((label) => (
+              <th key={label} className="px-4 py-3 font-semibold text-right whitespace-nowrap">{label}</th>
+            ))}
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
           {q && rows.length === 0 && (
-            <tr><td colSpan={measureLabel ? 3 : 2} className="px-4 py-6 text-center text-xs font-medium text-slate-400">
+            <tr><td colSpan={2 + nMeasures} className="px-4 py-6 text-center text-xs font-medium text-slate-400">
               No groups match "{query.trim()}"
               {isTruncated && (
                 <span className="block mt-1 text-amber-600">
@@ -208,13 +215,13 @@ const TreeTable = ({ tree, totalCount, totalSum, measureLabel, level1Shown, leve
           {rows.map(({ node, depth, key, isOpen }) => (
             <tr
               key={key}
-              className={`hover:bg-indigo-50/40 transition-colors ${node.children.length > 0 ? 'cursor-pointer' : ''} ${depth === 0 ? 'bg-slate-50/60' : ''}`}
+              className={`hover:bg-brand-50/40 transition-colors ${node.children.length > 0 ? 'cursor-pointer' : ''} ${depth === 0 ? 'bg-slate-50/60' : ''}`}
               onClick={() => node.children.length > 0 && toggle(key)}
             >
               <td className="px-4 py-2.5 font-medium text-gray-700">
                 <span className="flex items-center" style={{ paddingLeft: depth * 18 + 'px' }}>
                   {node.children.length > 0 ? (
-                    <i className={`fa-solid fa-chevron-right text-[9px] mr-2 text-indigo-500 transition-transform ${isOpen ? 'rotate-90' : ''}`}></i>
+                    <i className={`fa-solid fa-chevron-right text-[9px] mr-2 text-brand-500 transition-transform ${isOpen ? 'rotate-90' : ''}`}></i>
                   ) : (
                     <span className="w-[13px] mr-2 inline-block"></span>
                   )}
@@ -222,7 +229,9 @@ const TreeTable = ({ tree, totalCount, totalSum, measureLabel, level1Shown, leve
                 </span>
               </td>
               <td className="px-4 py-2.5 text-right tabular-nums">{fmt(node.count)}</td>
-              {measureLabel && <td className="px-4 py-2.5 text-right tabular-nums font-medium text-gray-700">{fmt(node.sum)}</td>}
+              {measureLabels.map((label, i) => (
+                <td key={label} className="px-4 py-2.5 text-right tabular-nums font-medium text-gray-700">{fmt(sumsOf(node)[i] || 0)}</td>
+              ))}
             </tr>
           ))}
         </tbody>
@@ -230,7 +239,9 @@ const TreeTable = ({ tree, totalCount, totalSum, measureLabel, level1Shown, leve
           <tr className="bg-gray-50 border-t-2 border-gray-200 text-xs font-bold text-gray-700 uppercase">
             <td className="px-4 py-2.5">{q ? 'Total (filtered)' : 'Total'}</td>
             <td className="px-4 py-2.5 text-right tabular-nums">{fmt(shownCount)}</td>
-            {measureLabel && <td className="px-4 py-2.5 text-right tabular-nums">{fmt(shownSum)}</td>}
+            {measureLabels.map((label, i) => (
+              <td key={label} className="px-4 py-2.5 text-right tabular-nums">{fmt(shownSums[i] || 0)}</td>
+            ))}
           </tr>
         </tfoot>
       </table>
@@ -356,7 +367,7 @@ const dummyDataBar = {
 
 const dummyDataLine = {
   labels: ['W1', 'W2', 'W3', 'W4'],
-  datasets: [{ label: 'Traffic', data: [20, 50, 30, 60], borderColor: '#6366f1', backgroundColor: '#6366f1', borderWidth: 2, tension: 0.4 }]
+  datasets: [{ label: 'Traffic', data: [20, 50, 30, 60], borderColor: '#274F91', backgroundColor: '#274F91', borderWidth: 2, tension: 0.4 }]
 };
 
 const dummyDataPie = {
@@ -375,7 +386,7 @@ const dummyDataRadar = {
     label: 'Product A',
     data: [65, 90, 70, 80, 85],
     backgroundColor: 'rgba(99, 102, 241, 0.2)',
-    borderColor: '#6366f1',
+    borderColor: '#274F91',
     borderWidth: 2
   }]
 };
@@ -493,15 +504,19 @@ const renderPreview = (type, widget, theme) => {
     case 'table': {
       const cfg = widget?.config;
       if (cfg?.tableMode === 'tree' && cfg.tableTree) {
+        // Older configs stored one tableMeasure + tree.totalSum; treat them as one-item lists.
+        const measures = cfg.tableMeasures || (cfg.tableMeasure ? [cfg.tableMeasure] : []);
+        const totalSums = cfg.tableTree.totalSums
+          || (cfg.tableTree.totalSum != null ? [cfg.tableTree.totalSum] : null);
         return (
           <TreeTable
             tree={cfg.tableTree.tree}
             totalCount={cfg.tableTree.totalCount}
-            totalSum={cfg.tableTree.totalSum}
+            totalSums={totalSums}
             level1Shown={cfg.tableTree.level1Shown ?? cfg.tableTree.tree.length}
             level1Total={cfg.tableTree.level1Total ?? cfg.tableTree.tree.length}
             deepTruncated={!!cfg.tableTree.deepTruncated}
-            measureLabel={cfg.tableMeasure ? `Sum of ${cfg.tableMeasure}` : null}
+            measureLabels={measures.map((m) => `Sum of ${m}`)}
           />
         );
       }
@@ -646,11 +661,11 @@ export default function ChartWidget({ widget, onConfigure, onRemove, onDuplicate
       {/* Configuration Tools (Absolute for KPIs, in Header for others) */}
       {widget.type === 'kpi' && !isReadonly && (
         <div className="absolute top-3 right-3 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-          <button onClick={(e) => { e.stopPropagation(); onConfigure(widget.id); }} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded bg-white shadow-sm border border-gray-100" title="Configure Data">
+          <button onClick={(e) => { e.stopPropagation(); onConfigure(widget.id); }} className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded bg-white shadow-sm border border-gray-100" title="Configure Data">
             <i className="fa-solid fa-gear text-xs"></i>
           </button>
           {onDuplicate && (
-            <button onClick={(e) => { e.stopPropagation(); onDuplicate(widget.id); }} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded bg-white shadow-sm border border-gray-100" title="Duplicate Widget">
+            <button onClick={(e) => { e.stopPropagation(); onDuplicate(widget.id); }} className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded bg-white shadow-sm border border-gray-100" title="Duplicate Widget">
               <i className="fa-solid fa-clone text-xs"></i>
             </button>
           )}
@@ -671,7 +686,7 @@ export default function ChartWidget({ widget, onConfigure, onRemove, onDuplicate
             <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={(e) => { e.stopPropagation(); onConfigure(widget.id); }}
-                className="p-1 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded"
+                className="p-1 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded"
                 title="Configure Data"
               >
                 <i className="fa-solid fa-gear text-xs"></i>
@@ -679,7 +694,7 @@ export default function ChartWidget({ widget, onConfigure, onRemove, onDuplicate
               {onDuplicate && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onDuplicate(widget.id); }}
-                  className="p-1 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded"
+                  className="p-1 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded"
                   title="Duplicate Widget"
                 >
                   <i className="fa-solid fa-clone text-xs"></i>
@@ -711,7 +726,7 @@ export default function ChartWidget({ widget, onConfigure, onRemove, onDuplicate
               <div className="absolute inset-0 bg-white/30 flex items-center justify-center opacity-0 group-hover/body:opacity-100 transition-opacity backdrop-blur-[1px]">
                 <button
                   onClick={() => onConfigure(widget.id)}
-                  className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold shadow-lg hover:bg-indigo-700 transition transform hover:scale-105 flex items-center"
+                  className="bg-brand-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold shadow-lg hover:bg-brand-700 transition transform hover:scale-105 flex items-center"
                 >
                   <i className="fa-solid fa-database mr-2"></i>
                   Connect Data

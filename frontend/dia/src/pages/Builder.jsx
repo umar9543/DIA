@@ -199,7 +199,7 @@ export default function Builder() {
 
           <button
             onClick={toggleViewerMode}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm flex items-center ${isViewerMode ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 border'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm flex items-center ${isViewerMode ? 'bg-brand-50 text-brand-700 border border-brand-200 hover:bg-brand-100' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 border'}`}
           >
             <i className={`fa-solid ${isViewerMode ? 'fa-eye-slash' : 'fa-eye'} mr-2`}></i>
             {isViewerMode ? 'Exit Preview' : 'Preview'}
@@ -207,7 +207,7 @@ export default function Builder() {
 
           <button
             onClick={() => navigate('/view')}
-            className="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm flex items-center"
+            className="bg-brand-600 text-white hover:bg-brand-700 px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm flex items-center"
           >
             Go to Dashboard <i className="fa-solid fa-arrow-right ml-2"></i>
           </button>
@@ -224,13 +224,13 @@ export default function Builder() {
           <div className="flex border-b border-gray-200 w-80 shrink-0">
             <button
               onClick={() => setActiveLeftTab('template')}
-              className={`flex-1 py-3 text-sm font-semibold transition ${activeLeftTab === 'template' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 py-3 text-sm font-semibold transition ${activeLeftTab === 'template' ? 'text-brand-600 border-b-2 border-brand-600' : 'text-gray-500 hover:text-gray-700'}`}
             >
               1. Template
             </button>
             <button
               onClick={() => setActiveLeftTab('data')}
-              className={`flex-1 py-3 text-sm font-semibold transition ${activeLeftTab === 'data' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 py-3 text-sm font-semibold transition ${activeLeftTab === 'data' ? 'text-brand-600 border-b-2 border-brand-600' : 'text-gray-500 hover:text-gray-700'}`}
             >
               2. Load Data
             </button>
@@ -250,7 +250,7 @@ export default function Builder() {
           {!isViewerMode && (
             <button
               onClick={() => setIsLeftOpen(!isLeftOpen)}
-              className="absolute top-1/2 -translate-y-1/2 left-0 z-20 bg-white border border-gray-200 border-l-0 shadow-sm rounded-r-md py-3 px-1.5 text-gray-400 hover:text-indigo-600 transition-colors focus:outline-none"
+              className="absolute top-1/2 -translate-y-1/2 left-0 z-20 bg-white border border-gray-200 border-l-0 shadow-sm rounded-r-md py-3 px-1.5 text-gray-400 hover:text-brand-600 transition-colors focus:outline-none"
               title={isLeftOpen ? "Collapse Left Panel" : "Expand Left Panel"}
             >
               <i className={`fa-solid ${isLeftOpen ? 'fa-chevron-left' : 'fa-chevron-right'} text-[10px]`}></i>
@@ -261,7 +261,7 @@ export default function Builder() {
           {!isViewerMode && (
             <button
               onClick={() => setIsRightOpen(!isRightOpen)}
-              className="absolute top-1/2 -translate-y-1/2 right-0 z-20 bg-white border border-gray-200 border-r-0 shadow-sm rounded-l-md py-3 px-1.5 text-gray-400 hover:text-indigo-600 transition-colors focus:outline-none"
+              className="absolute top-1/2 -translate-y-1/2 right-0 z-20 bg-white border border-gray-200 border-r-0 shadow-sm rounded-l-md py-3 px-1.5 text-gray-400 hover:text-brand-600 transition-colors focus:outline-none"
               title={isRightOpen ? "Collapse Right Panel" : "Expand Right Panel"}
             >
               <i className={`fa-solid ${isRightOpen ? 'fa-chevron-right' : 'fa-chevron-left'} text-[10px]`}></i>
@@ -280,8 +280,8 @@ export default function Builder() {
                   onDoubleClick={() => !isViewerMode && startRename(page)}
                   className={`group flex items-center px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer border transition-all shrink-0 ${
                     isActive
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300 hover:text-indigo-600'
+                      ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-brand-300 hover:text-brand-600'
                   }`}
                 >
                   <i className="fa-regular fa-file mr-2 text-xs opacity-70"></i>
@@ -296,7 +296,7 @@ export default function Builder() {
                         if (e.key === 'Escape') setEditingPageId(null);
                       }}
                       onBlur={commitRename}
-                      className={`bg-transparent outline-none w-28 text-sm font-semibold border-b ${isActive ? 'text-white placeholder-white/50 border-white/40' : 'text-gray-700 border-indigo-300'}`}
+                      className={`bg-transparent outline-none w-28 text-sm font-semibold border-b ${isActive ? 'text-white placeholder-white/50 border-white/40' : 'text-gray-700 border-brand-300'}`}
                       placeholder="Page name"
                     />
                   ) : (
@@ -305,7 +305,7 @@ export default function Builder() {
                   {!isViewerMode && !isEditing && (
                     <button
                       onClick={(e) => { e.stopPropagation(); startRename(page); }}
-                      className={`ml-2 opacity-0 group-hover:opacity-100 transition-opacity ${isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 hover:text-indigo-600'}`}
+                      className={`ml-2 opacity-0 group-hover:opacity-100 transition-opacity ${isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 hover:text-brand-600'}`}
                       title="Rename page"
                     >
                       <i className="fa-solid fa-pen text-[10px]"></i>
@@ -326,7 +326,7 @@ export default function Builder() {
             {!isViewerMode && (
               <button
                 onClick={handleAddPage}
-                className="flex items-center px-3 py-2 rounded-lg text-sm font-semibold text-gray-500 border border-dashed border-gray-300 hover:border-indigo-400 hover:text-indigo-600 transition-colors bg-white shrink-0"
+                className="flex items-center px-3 py-2 rounded-lg text-sm font-semibold text-gray-500 border border-dashed border-gray-300 hover:border-brand-400 hover:text-brand-600 transition-colors bg-white shrink-0"
                 title="Add page"
               >
                 <i className="fa-solid fa-plus mr-1.5 text-xs"></i> Page

@@ -58,10 +58,11 @@ function buildTable(sheet, selectedColumns) {
 }
 
 // Pivot-style tree: rows grouped by each hierarchy column in turn, with a row
-// count and (optionally) the sum of a value column per group.
-function buildTableTree(sheet, { hierarchy, measure }) {
+// count and (optionally) the sum of one or more value columns per group.
+function buildTableTree(sheet, { hierarchy, measures }) {
   const levelIdxs = hierarchy.map((c) => columnIndex(sheet, c));
-  const measureIdx = measure ? columnIndex(sheet, measure) : -1;
+  const measureIdxs = (measures || []).map((c) => columnIndex(sheet, c));
+  const hasMeasures = measureIdxs.length > 0;
   // The first level often holds a near-unique key (order no., requisition no.) with
   // thousands of groups — searching only works on groups that are actually in the
   // tree, so keep the caps generous and report when they truncate.
@@ -69,17 +70,23 @@ function buildTableTree(sheet, { hierarchy, measure }) {
   const DEEP_MAX = 200;      // per parent, ranked by value
   const TOTAL_BUDGET = 20000; // hard ceiling on stored nodes across the whole tree
 
-  const root = { children: new Map(), count: 0, sum: 0 };
+  const newSums = () => measureIdxs.map(() => 0);
+  const addRow = (node, row) => {
+    node.count += 1;
+    measureIdxs.forEach((mIdx, i) => {
+      node.sums[i] += toNumber(isBlank(row[mIdx]) ? 0 : row[mIdx]);
+    });
+  };
+
+  const root = { children: new Map(), count: 0, sums: newSums() };
   sheet.data.forEach((row) => {
-    root.count += 1;
-    if (measureIdx >= 0) root.sum += toNumber(isBlank(row[measureIdx]) ? 0 : row[measureIdx]);
+    addRow(root, row);
     let node = root;
     for (const idx of levelIdxs) {
       const key = isBlank(row[idx]) ? 'Unknown' : String(row[idx]).trim();
-      if (!node.children.has(key)) node.children.set(key, { children: new Map(), count: 0, sum: 0 });
+      if (!node.children.has(key)) node.children.set(key, { children: new Map(), count: 0, sums: newSums() });
       node = node.children.get(key);
-      node.count += 1;
-      if (measureIdx >= 0) node.sum += toNumber(isBlank(row[measureIdx]) ? 0 : row[measureIdx]);
+      addRow(node, row);
     }
   });
 
@@ -88,7 +95,7 @@ function buildTableTree(sheet, { hierarchy, measure }) {
     const cap = depth === 0 ? LEVEL1_MAX : DEEP_MAX;
     const entries = [...map.entries()]
       .map(([label, n]) => ({ label, node: n }))
-      .sort((a, b) => (measureIdx >= 0 ? b.node.sum - a.node.sum : b.node.count - a.node.count));
+      .sort((a, b) => (hasMeasures ? b.node.sums[0] - a.node.sums[0] : b.node.count - a.node.count));
     if (entries.length > cap && depth > 0) budget.deepTruncated = true;
     const out = [];
     for (const { label, node } of entries.slice(0, cap)) {
@@ -97,7 +104,7 @@ function buildTableTree(sheet, { hierarchy, measure }) {
       out.push({
         label,
         count: node.count,
-        sum: measureIdx >= 0 ? node.sum : null,
+        sums: hasMeasures ? node.sums : null,
         children: toArray(node.children, depth + 1)
       });
     }
@@ -110,7 +117,7 @@ function buildTableTree(sheet, { hierarchy, measure }) {
   return {
     tree,
     totalCount: root.count,
-    totalSum: measureIdx >= 0 ? root.sum : null,
+    totalSums: hasMeasures ? root.sums : null,
     level1Total,
     level1Shown: tree.length,
     deepTruncated: budget.deepTruncated
@@ -300,9 +307,14 @@ export function buildWidgetConfig(widgetType, form, rawSheets) {
   let radarData = null;
   let bubbleData = null;
 
+  // Older widgets stored a single tableMeasure string; treat it as a one-item list.
+  const tableMeasures = (form.tableMeasures && form.tableMeasures.length > 0)
+    ? form.tableMeasures
+    : (form.tableMeasure ? [form.tableMeasure] : []);
+
   if (isTable) {
     if (form.tableMode === 'tree') {
-      tableTree = buildTableTree(sheet, { hierarchy: selectedColumns, measure: form.tableMeasure || null });
+      tableTree = buildTableTree(sheet, { hierarchy: selectedColumns, measures: tableMeasures });
     } else {
       tableData = buildTable(sheet, selectedColumns);
     }
@@ -340,7 +352,7 @@ export function buildWidgetConfig(widgetType, form, rawSheets) {
     tableData: isTable ? tableData : null,
     tableTree: isTable ? tableTree : null,
     tableMode: isTable ? (form.tableMode || 'flat') : null,
-    tableMeasure: isTable ? (form.tableMeasure || null) : null,
+    tableMeasures: isTable ? tableMeasures : null,
     selectedColumns: isTable || isMultiMeasure ? selectedColumns : null,
     currency: isSingleValue ? (form.currency || '') : null,
     customTitle,
@@ -368,6 +380,7 @@ export function refreshWidgetConfigs(widgets, rawSheets) {
         dataLimit: config.dataLimit,
         selectedColumns: config.selectedColumns,
         tableMode: config.tableMode,
+        tableMeasures: config.tableMeasures,
         tableMeasure: config.tableMeasure,
         currency: config.currency,
         customTitle: config.customTitle
