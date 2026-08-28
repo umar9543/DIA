@@ -325,8 +325,12 @@ const RUNTIME_JS = String.raw`
   });
 
   // Widgets were rendered before their cards were in the document, so size-dependent
-  // work (KPI font fitting) saw 0x0 boxes. Kick a resize now that layout exists.
+  // work (KPI font fitting) saw 0x0 boxes. Kick a resize now that layout exists,
+  // and again once the web fonts arrive (glyph widths change with the real face).
   setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 0);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () { window.dispatchEvent(new Event('resize')); });
+  }
 })();
 `;
 
@@ -360,9 +364,13 @@ export function buildDashboardHtml(pages, { title = 'DIA Dashboard', themeKey } 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(title)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,800&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; }
-  body { font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; background: #f9fafb; color: #0f172a; display: flex; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+  /* Same faces as the DIA app; the system stack only kicks in fully offline. */
+  body { font-family: "DM Sans", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; background: #f9fafb; color: #0f172a; display: flex; min-height: 100vh; -webkit-font-smoothing: antialiased; }
   aside { width: 256px; flex-shrink: 0; background: #fff; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; }
   .brand { display: flex; align-items: center; gap: 12px; padding: 24px 20px 20px; }
   .brand-name { color: #0f172a; font-weight: 800; font-size: 17px; letter-spacing: -0.02em; line-height: 1.1; }
@@ -387,7 +395,7 @@ export function buildDashboardHtml(pages, { title = 'DIA Dashboard', themeKey } 
   .board { position: relative; }
   .card { position: absolute; background: #fff; border-radius: 16px; box-shadow: 0 4px 20px -4px rgba(15,23,42,.08), 0 1px 3px rgba(15,23,42,.04); overflow: hidden; display: flex; flex-direction: column; }
   .card.kpi { align-items: center; justify-content: center; padding: 12px; }
-  .kpi-value { font-weight: 800; letter-spacing: -0.02em; white-space: nowrap; line-height: 1.05; }
+  .kpi-value { font-family: "Montserrat", "DM Sans", "Segoe UI", sans-serif; font-weight: 800; letter-spacing: -0.02em; white-space: nowrap; line-height: 1.05; }
   .kpi-label { font-size: 12px; font-weight: 600; color: #5a7684; margin-top: 8px; text-align: center; }
   .w-title { font-size: 13px; font-weight: 600; color: #475569; padding: 11px 16px; border-bottom: 1px solid #f1f5f9; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .chart-wrap { flex: 1; min-height: 0; padding: 12px; position: relative; }
