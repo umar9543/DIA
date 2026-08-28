@@ -413,8 +413,11 @@ const dummyDataTable = [
 ];
 
 const renderPreview = (type, widget, theme) => {
-  const isConfigured = !!widget?.config;
   const config = widget?.config;
+  // Only data-bound configs (built from a sheet) count as configured. Template
+  // widgets carry a display-only placeholder config ({ title, value }) with no
+  // computed data — those must keep rendering the dummy preview, not an empty chart.
+  const isConfigured = !!config?.sheetName;
 
   const labels = isConfigured && config.labels ? config.labels : [];
   const dataValues = isConfigured && config.dataValues ? config.dataValues : [];
@@ -475,6 +478,12 @@ const renderPreview = (type, widget, theme) => {
       // If configured, calculate a single KPI value (e.g. sum of all aggregates)
       let kpiValue = '478';
       let kpiTitle = 'Total Suppliers';
+
+      // Template placeholder: show its illustrative value until real data is bound.
+      if (!isConfigured && config?.value) {
+        kpiTitle = config.title || kpiTitle;
+        kpiValue = config.value;
+      }
 
       if (isConfigured) {
         kpiTitle = config.title;
@@ -593,7 +602,7 @@ const renderPreview = (type, widget, theme) => {
       if (config?.currency === '$') speedoFormat = '$' + speedoFormat;
       else if (config?.currency === '€') speedoFormat = '€' + speedoFormat;
 
-      const speedoTitle = isConfigured ? config.title : 'Score';
+      const speedoTitle = config?.title || 'Score';
       const gaugeMax = speedoValue > 100 ? speedoValue : 100;
       const visualFill = speedoValue > 100 ? 100 : speedoValue;
 

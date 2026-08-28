@@ -63,6 +63,9 @@ const RUNTIME_JS = String.raw`
         '<div class="kpi-label">' + esc(cfg.title) + '</div>';
       var vEl = card.querySelector('.kpi-value');
       var fit = function () {
+        // renderWidget runs before the card is attached to the document; a 0-height
+        // box would compute font-size 0 and the value would stay invisible.
+        if (!card.clientWidth || !card.clientHeight) return;
         var maxW = card.clientWidth * 0.85, size = Math.min(44, card.clientHeight * 0.4);
         vEl.style.fontSize = size + 'px';
         while (size > 12 && vEl.scrollWidth > maxW) { size -= 2; vEl.style.fontSize = size + 'px'; }
@@ -320,6 +323,10 @@ const RUNTIME_JS = String.raw`
       window.dispatchEvent(new Event('resize')); // charts resize into the newly shown page
     });
   });
+
+  // Widgets were rendered before their cards were in the document, so size-dependent
+  // work (KPI font fitting) saw 0x0 boxes. Kick a resize now that layout exists.
+  setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 0);
 })();
 `;
 
@@ -336,7 +343,7 @@ export function buildDashboardHtml(pages, { title = 'DIA Dashboard', themeKey } 
   const generated = new Date().toLocaleString();
 
   const exportPages = pages
-    .map((p) => ({ name: p.name, widgets: p.widgets.filter((w) => w.config) }))
+    .map((p) => ({ name: p.name, widgets: p.widgets.filter((w) => w.config && w.config.sheetName) }))
     .filter((p) => p.widgets.length > 0);
 
   const payload = JSON.stringify({ pages: exportPages, theme }).replace(/</g, '\\u003c');
